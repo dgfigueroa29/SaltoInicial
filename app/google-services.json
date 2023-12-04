@@ -1,0 +1,80 @@
+{
+  "project_info": {
+    "project_number": "669546340867",
+    "firebase_url": "https://api-project-669546340867.firebaseio.com",
+    "project_id": "api-project-669546340867",
+    "storage_bucket": "api-project-669546340867.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:669546340867:android:5098ba12da37205d97a436",
+        "android_client_info": {
+          "package_name": "com.boa.saltoinicial"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA1FZCqOY1NMk08dXTNCJcP5Hwai2I22Ks"
+        },
+        {
+          "current_key": "AIzaSyB_dn_NnRfEn77jDjZ8Kc_k51bYC2u-NoY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:669546340867:android:65d65674a257becb97a436",
+        "android_client_info": {
+          "package_name": "com.boa.weathertest"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "669546340867-9m5v4odk4c8ooem6j4td796l032pd7jf.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.boa.weathertest",
+            "certificate_hash": "f892ed09bfd3554a459af5a8732ebe2b9a7954c6"
+          }
+        },
+        {
+          "client_id": "669546340867-nkulnahc3g9rt31ftrtmnmfl1lqsd0ps.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.boa.weathertest",
+            "certificate_hash": "2a6df4f9ff93eca7553382b3bf619433ae20a2da"
+          }
+        },
+        {
+          "client_id": "669546340867-qajrjbf28of4d7lulbgngsjf7t0o2ont.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.boa.weathertest",
+            "certificate_hash": "ce98204a6203e74eb78ce5d4002205261ca2f4c8"
+          }
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA1FZCqOY1NMk08dXTNCJcP5Hwai2I22Ks"
+        },
+        {
+          "current_key": "AIzaSyB_dn_NnRfEn77jDjZ8Kc_k51bYC2u-NoY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

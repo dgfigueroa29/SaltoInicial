@@ -1,2 +1,13 @@
+arguments=--init-script /home/david/.config/Code/User/globalStorage/redhat.java/1.24.0/config_linux/org.eclipse.osgi/55/0/.cp/gradle/init/init.gradle --init-script /home/david/.config/Code/User/globalStorage/redhat.java/1.24.0/config_linux/org.eclipse.osgi/55/0/.cp/gradle/protobuf/init.gradle
+auto.sync=false
+build.scans.enabled=false
+connection.gradle.distribution=GRADLE_DISTRIBUTION(WRAPPER)
 connection.project.dir=
 eclipse.preferences.version=1
+gradle.user.home=
+java.home=/home/david/.vscode/extensions/redhat.java-1.24.0-linux-x64/jre/17.0.8.1-linux-x86_64
+jvm.arguments=
+offline.mode=false
+override.workspace.settings=true
+show.console.view=true
+show.executions.view=true
