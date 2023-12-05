@@ -3,14 +3,10 @@
 	README.md,8/e/8ec9a00bfd09b3190ac6b22251dbb1aa95a0579d
 X
 (gradle/wrapper/gradle-wrapper.properties,f/b/fbe448ebfc3eb2d4e308f6b8b043666f5b57235e
-p
-@app/src/main/java/com/boa/saltoinicial/activities/WebActivity.kt,a/3/a3f11f7ea917bba2e022b760c820fb2bb207f35c
 Y
 )app/src/main/java/com/boa/utils/Common.kt,4/6/464e3c9cef948d0951a0271a17d992fe785168d3
 f
 6app/src/main/java/com/boa/saltoinicial/MainActivity.kt,a/d/ad822b43fc87081d1027e4e2cef7f116dcdd4f1f
-X
-(app/src/main/java/com/boa/utils/Utils.kt,4/5/45f9a5d217e9ecad64f96de76b59b855412efc13
 D
 app/build.gradle.kts,d/2/d2a4383452aad84a18429a5844d31330a012a9e6
 :

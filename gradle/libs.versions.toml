@@ -8,6 +8,10 @@ espresso-core = "3.5.1"
 lifecycle-runtime-ktx = "2.6.2"
 activity-compose = "1.8.1"
 compose-bom = "2023.10.01"
+crashlytics = "2.9.9"
+services = "4.4.0"
+analytics = "21.5.0"
+app-crashlytics = "18.6.0"
 
 [libraries]
 core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "core-ktx" }
@@ -24,10 +28,14 @@ ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview
 ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
 ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
 material3 = { group = "androidx.compose.material3", name = "material3" }
+analytics = { group = "com.google.firebase", name = "firebase-analytics", version.ref = "analytics" }
+app-crashlytics = { group = "com.google.firebase", name = "firebase-crashlytics", version.ref = "app-crashlytics" }
 
 [plugins]
 com-android-application = { id = "com.android.application", version.ref = "agp" }
 org-jetbrains-kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "org-jetbrains-kotlin-android" }
+crashlytics = { id = "com.google.firebase.crashlytics", version.ref = "crashlytics" }
+services = { id = "com.google.gms.google-services", version.ref = "services" }
 
 [bundles]
 
