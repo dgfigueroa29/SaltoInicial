@@ -1,20 +1,22 @@
 [versions]
-agp = "8.2.0"
-org-jetbrains-kotlin-android = "1.8.10"
+agp = "8.3.0"
+firebase-bom = "32.7.4"
+org-jetbrains-kotlin-android = "1.9.22"
 core-ktx = "1.12.0"
 junit = "4.13.2"
 androidx-test-ext-junit = "1.1.5"
 espresso-core = "3.5.1"
-lifecycle-runtime-ktx = "2.6.2"
-activity-compose = "1.8.1"
-compose-bom = "2023.10.01"
+lifecycle-runtime-ktx = "2.7.0"
+activity-compose = "1.8.2"
+compose-bom = "2024.02.02"
 crashlytics = "2.9.9"
-services = "4.4.0"
-analytics = "21.5.0"
-app-crashlytics = "18.6.0"
+services = "4.4.1"
+analytics = "21.5.1"
+app-crashlytics = "18.6.2"
 
 [libraries]
 core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "core-ktx" }
+firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebase-bom" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-test-ext-junit = { group = "androidx.test.ext", name = "junit", version.ref = "androidx-test-ext-junit" }
 espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espresso-core" }

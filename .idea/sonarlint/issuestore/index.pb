@@ -28,8 +28,6 @@ R
 gradlew,5/b/5bbfa66edb4db3c7c33c5181f43510990d3307f9
 U
 %app/src/main/res/xml/backup_rules.xml,e/0/e0bc1eda8e2c689cb79d5b6e5cfd11385f06c2b8
-’
-bapp/build/generated/crashlytics/res/debug/values/com_google_firebase_crashlytics_mappingfileid.xml,3/a/3a5e1274d8c1c7d1f107ebc060290f5e1b4ebe82
 7
 LICENSE,0/3/0398ccd0f49298b10a3d76a47800d2ebecd49859
 @
@@ -76,3 +74,5 @@ C
 settings.gradle.kts,7/4/749edfcc96398253e5b3416184e95c46621da850
 8
 .project,f/8/f8b41ce76d7b80d2b47e91b5f92c15f00eccf187
+’
+bapp/build/generated/crashlytics/res/debug/values/com_google_firebase_crashlytics_mappingfileid.xml,3/a/3a5e1274d8c1c7d1f107ebc060290f5e1b4ebe82
