@@ -7,12 +7,13 @@ plugins {
 
 android {
     namespace = "com.boa.saltoinicial"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.boa.saltoinicial"
         minSdk = 21
-        targetSdk = 34
+        //noinspection EditedTargetSdkVersion
+        targetSdk = 35
         versionCode = 5
         versionName = "1.5"
 
