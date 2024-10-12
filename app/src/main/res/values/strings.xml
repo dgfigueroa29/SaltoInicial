@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">Salto Inicial</string>
+    <string name="loading">Cargando…</string>
+    <string name="please_wait">Por favor espera…</string>
+    <string name="offline">¿Sin conexión?</string>
+    <string name="offline_desc">Reinicia tu conexión o tu app para continuar\n</string>
 </resources>

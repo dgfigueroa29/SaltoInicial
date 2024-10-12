@@ -34,6 +34,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -103,7 +104,7 @@ fun WebViewPage(url: String) {
                     Spacer(modifier = Modifier.height(20.dp))
                     //.........................Text: title
                     Text(
-                        text = "Cargando...",
+                        text = stringResource(R.string.loading),
                         textAlign = TextAlign.Center,
                         modifier = Modifier
                             .padding(top = 20.dp)
@@ -117,7 +118,7 @@ fun WebViewPage(url: String) {
 
                     //.........................Text : description
                     Text(
-                        text = "Por favor espera...",
+                        text = stringResource(R.string.please_wait),
                         textAlign = TextAlign.Center,
                         modifier = Modifier
                             .padding(top = 10.dp, start = 25.dp, end = 25.dp)
@@ -215,8 +216,8 @@ fun WebViewPage(url: String) {
 
     if (infoDialog.value) {
         InfoDialog(
-            title = "¿Sin conexión?",
-            desc = "Reinicia tu conexión o tu app para continuar\n",
+            title = stringResource(R.string.offline),
+            desc = stringResource(R.string.offline_desc),
             onDismiss = {
                 infoDialog.value = false
             }
