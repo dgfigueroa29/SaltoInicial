@@ -13,7 +13,7 @@ crashlytics = "3.0.2"
 services = "4.4.2"
 analytics = "22.1.2"
 app-crashlytics = "19.2.1"
-kotlin = "2.0.0"
+kotlin = "2.0.10"
 
 [libraries]
 core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "core-ktx" }
