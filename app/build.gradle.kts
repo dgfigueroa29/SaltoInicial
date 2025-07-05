@@ -8,13 +8,13 @@ plugins {
 
 android {
     namespace = "com.boa.saltoinicial"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.boa.saltoinicial"
         minSdk = 21
         //noinspection EditedTargetSdkVersion
-        targetSdk = 35
+        targetSdk = 36
         versionCode = 5
         versionName = "1.5"
 
@@ -43,6 +43,7 @@ android {
     buildFeatures {
         compose = true
     }
+    @Suppress("UnstableApiUsage")
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.10"
     }

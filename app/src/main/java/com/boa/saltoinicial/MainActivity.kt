@@ -7,7 +7,6 @@ import android.os.Bundle
 import android.view.ViewGroup
 import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
-import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.activity.ComponentActivity
@@ -183,11 +182,6 @@ fun WebViewPage(url: String) {
                         //Retry on error
                         infoDialog.value = true
                     }
-
-                    override fun shouldInterceptRequest(
-                        view: WebView,
-                        request: WebResourceRequest
-                    ): WebResourceResponse? = super.shouldInterceptRequest(view, request)
 
                     override fun onPageStarted(view: WebView, url: String?, favicon: Bitmap?) {
                         openFullDialogCustom.value = true
