@@ -12,7 +12,7 @@ android {
 
     defaultConfig {
         applicationId = "com.boa.saltoinicial"
-        minSdk = 21
+        minSdk = 23
         //noinspection EditedTargetSdkVersion
         targetSdk = 36
         versionCode = 5
@@ -37,7 +37,9 @@ android {
         sourceCompatibility = JavaVersion.VERSION_19
         targetCompatibility = JavaVersion.VERSION_19
     }
+    @Suppress("DEPRECATION")
     kotlinOptions {
+        @Suppress("DEPRECATION")
         jvmTarget = "19"
     }
     buildFeatures {
@@ -49,7 +51,16 @@ android {
     }
     packaging {
         resources {
-            excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            excludes += listOf(
+                "META-INF/LICENSE.md",
+                "META-INF/LICENSE-notice.md",
+                "META-INF/LICENSE.txt",
+                "META-INF/NOTICE.txt",
+                "META-INF/DEPENDENCIES",
+                "META-INF/ASL2.0",
+                "META-INF/AL2.0",
+                "META-INF/LGPL2.1"
+            )
         }
     }
 }
