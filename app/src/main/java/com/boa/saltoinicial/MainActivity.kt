@@ -32,6 +32,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -154,54 +155,66 @@ fun WebViewPage(url: String) {
 
     // Adding a WebView inside AndroidView
     // with layout as full screen
-    AndroidView(
-        factory = {
-            WebView(it).apply {
-                layoutParams = ViewGroup.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.MATCH_PARENT
-                )
-                webViewClient = WebViewClient()
+    if (LocalInspectionMode.current) {
+        // Show a placeholder in the preview to avoid the WebView rendering issue
+        // WebView is not fully supported in LayoutLib (Compose Preview)
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Text(text = "WebView Placeholder", color = MaterialTheme.colorScheme.primary)
+        }
+    } else {
+        AndroidView(
+            factory = {
+                WebView(it).apply {
+                    layoutParams = ViewGroup.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.MATCH_PARENT
+                    )
+                    webViewClient = WebViewClient()
 
-                // to play video on a web view
-                settings.javaScriptEnabled = true
+                    // to play video on a web view
+                    settings.javaScriptEnabled = true
 
-                // to verify that the client requesting your web page is actually your Android app.
-                settings.userAgentString =
-                    System.getProperty("http.agent") //Dalvik/2.1.0 (Linux; U; Android 11; M2012K11I Build/RKQ1.201112.002)
+                    // to verify that the client requesting your web page is actually your Android app.
+                    settings.userAgentString =
+                        System.getProperty("http.agent") //Dalvik/2.1.0 (Linux; U; Android 11; M2012K11I Build/RKQ1.201112.002)
 
-                settings.useWideViewPort = true
+                    settings.useWideViewPort = true
 
-                webViewClient = object : WebViewClient() {
-                    override fun onReceivedError(
-                        view: WebView?,
-                        request: WebResourceRequest?,
-                        error: WebResourceError?
-                    ) {
-                        super.onReceivedError(view, request, error)
-                        //Retry on error
-                        infoDialog.value = true
+                    webViewClient = object : WebViewClient() {
+                        override fun onReceivedError(
+                            view: WebView?,
+                            request: WebResourceRequest?,
+                            error: WebResourceError?
+                        ) {
+                            super.onReceivedError(view, request, error)
+                            //Retry on error
+                            infoDialog.value = true
+                        }
+
+                        override fun onPageStarted(view: WebView, url: String?, favicon: Bitmap?) {
+                            openFullDialogCustom.value = true
+                            backEnabled = view.canGoBack()
+                        }
+
+                        // Compose WebView Part 7 | Hide elements from web view
+                        override fun onPageFinished(view: WebView?, url: String?) {
+                            super.onPageFinished(view, url)
+                            openFullDialogCustom.value = false
+                            view?.let { removeElement(it) }
+                        }
                     }
 
-                    override fun onPageStarted(view: WebView, url: String?, favicon: Bitmap?) {
-                        openFullDialogCustom.value = true
-                        backEnabled = view.canGoBack()
-                    }
-
-                    // Compose WebView Part 7 | Hide elements from web view
-                    override fun onPageFinished(view: WebView?, url: String?) {
-                        super.onPageFinished(view, url)
-                        openFullDialogCustom.value = false
-                        removeElement(view!!)
-                    }
+                    loadUrl(url)
+                    webView = this
                 }
-
-                loadUrl(url)
-                webView = this
-            }
-        }, update = {
-            webView = it
-        })
+            }, update = {
+                webView = it
+            })
+    }
 
 
     if (mutableStateTrigger.value) {
@@ -219,8 +232,10 @@ fun WebViewPage(url: String) {
     }
 
     BackHandler(enabled = backEnabled) {
-        removeElement(webView!!)
-        webView?.goBack()
+        webView?.let {
+            removeElement(it)
+            it.goBack()
+        }
     }
 }
 
