@@ -24,16 +24,17 @@ class MainWebViewClient(
         val webViewError = WebViewError.NetworkError(
             error?.description?.toString() ?: "Unknown network error"
         )
-        viewModel.onError(webViewError)
+        val failingUrl = request?.url?.toString()
+        viewModel.onError(webViewError, failingUrl)
     }
 
     override fun onPageStarted(view: WebView, url: String?, favicon: Bitmap?) {
         super.onPageStarted(view, url, favicon)
-        viewModel.onPageStarted()
+        viewModel.onPageStarted(url)
     }
 
     override fun onPageFinished(view: WebView?, url: String?) {
         super.onPageFinished(view, url)
-        viewModel.onPageFinished()
+        viewModel.onPageFinished(url)
     }
 }

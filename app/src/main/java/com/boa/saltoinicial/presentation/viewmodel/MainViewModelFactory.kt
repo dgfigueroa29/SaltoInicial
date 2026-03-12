@@ -7,11 +7,14 @@ import com.boa.saltoinicial.domain.usecase.HandleWebViewErrorUseCase
 import com.boa.saltoinicial.domain.usecase.HideElementsUseCase
 import com.boa.saltoinicial.domain.usecase.LoadWebsiteUseCase
 import com.boa.saltoinicial.domain.usecase.NavigateBackUseCase
+import com.boa.saltoinicial.presentation.analytics.AnalyticsTracker
 
 /**
  * Factory for creating MainViewModel with dependencies
  */
-class MainViewModelFactory : ViewModelProvider.Factory {
+class MainViewModelFactory(
+    private val analyticsTracker: AnalyticsTracker
+) : ViewModelProvider.Factory {
 
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -28,7 +31,8 @@ class MainViewModelFactory : ViewModelProvider.Factory {
                 loadWebsiteUseCase = loadWebsiteUseCase,
                 handleWebViewErrorUseCase = handleWebViewErrorUseCase,
                 navigateBackUseCase = navigateBackUseCase,
-                hideElementsUseCase = hideElementsUseCase
+                hideElementsUseCase = hideElementsUseCase,
+                analyticsTracker = analyticsTracker
             ) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")

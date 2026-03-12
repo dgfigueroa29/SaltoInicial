@@ -1,9 +1,18 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.com.android.application)
     alias(libs.plugins.services)
     alias(libs.plugins.crashlytics)
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.detekt)
+}
+
+val localProps = Properties().apply {
+    val file = rootProject.file("local.properties")
+    if (file.exists()) {
+        load(file.inputStream())
+    }
 }
 
 android {
@@ -22,6 +31,17 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
+
+        val appsFlyerDevKey = (project.findProperty("appsFlyerDevKey") as String?)
+            ?: localProps.getProperty("appsFlyerDevKey", "")
+        val amplitudeApiKey = (project.findProperty("amplitudeApiKey") as String?)
+            ?: localProps.getProperty("amplitudeApiKey", "")
+        val sentryDsn = (project.findProperty("sentryDsn") as String?)
+            ?: localProps.getProperty("sentryDsn", "")
+
+        buildConfigField("String", "APPSFLYER_DEV_KEY", "\"$appsFlyerDevKey\"")
+        buildConfigField("String", "AMPLITUDE_API_KEY", "\"$amplitudeApiKey\"")
+        buildConfigField("String", "SENTRY_DSN", "\"$sentryDsn\"")
     }
 
     buildTypes {
@@ -45,6 +65,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     packaging {
         resources {
@@ -66,6 +87,12 @@ dependencies {
     implementation(platform(libs.firebase.bom))
     implementation(libs.app.crashlytics)
     implementation(libs.analytics)
+    implementation(libs.firebase.perf)
+    implementation(libs.appsflyer)
+    implementation(libs.install.referrer)
+    implementation(libs.amplitude)
+    implementation(libs.sentry)
+    implementation(libs.timber)
     implementation(libs.core.ktx)
     implementation(libs.lifecycle.runtime.ktx)
     implementation(libs.lifecycle.viewmodel.compose)
@@ -85,6 +112,7 @@ dependencies {
     androidTestImplementation(libs.ui.test.junit4)
     debugImplementation(libs.ui.tooling)
     debugImplementation(libs.ui.test.manifest)
+    debugImplementation(libs.leakcanary)
 }
 
 detekt {

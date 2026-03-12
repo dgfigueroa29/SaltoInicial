@@ -24,6 +24,11 @@ import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.amplitude.android.Amplitude
+import com.appsflyer.AppsFlyerLib
+import com.boa.saltoinicial.presentation.analytics.AnalyticsEvents
+import com.boa.saltoinicial.presentation.analytics.AnalyticsParams
+import com.boa.saltoinicial.presentation.analytics.MultiAnalyticsTracker
 import com.boa.saltoinicial.presentation.state.MainUiEvent
 import com.boa.saltoinicial.presentation.ui.InfoDialog
 import com.boa.saltoinicial.presentation.ui.LoadingDialog
@@ -32,12 +37,21 @@ import com.boa.saltoinicial.presentation.viewmodel.MainViewModel
 import com.boa.saltoinicial.presentation.viewmodel.MainViewModelFactory
 import com.boa.saltoinicial.ui.theme.SaltoInicialTheme
 import com.google.firebase.Firebase
+import com.google.firebase.analytics.FirebaseAnalytics
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.google.firebase.crashlytics.crashlytics
+import timber.log.Timber
+import com.amplitude.android.Configuration as AmplitudeConfiguration
 
 class MainActivity : ComponentActivity() {
+    private lateinit var firebaseAnalytics: FirebaseAnalytics
+    private lateinit var analyticsTracker: MultiAnalyticsTracker
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        firebaseAnalytics = FirebaseAnalytics.getInstance(this)
+        firebaseAnalytics.logEvent(FirebaseAnalytics.Event.APP_OPEN, null)
+        setupTracking()
         val crashlytics: FirebaseCrashlytics = Firebase.crashlytics
         try {
             setContent {
@@ -47,7 +61,11 @@ class MainActivity : ComponentActivity() {
                         modifier = Modifier.fillMaxSize(),
                         color = MaterialTheme.colorScheme.background
                     ) {
-                        val viewModel: MainViewModel = viewModel(factory = MainViewModelFactory())
+                        val viewModel: MainViewModel = viewModel(
+                            factory = MainViewModelFactory(
+                                analyticsTracker = analyticsTracker
+                            )
+                        )
                         WebViewPage(viewModel = viewModel)
                     }
                 }
@@ -57,6 +75,45 @@ class MainActivity : ComponentActivity() {
             // This is intentionally broad to prevent app crashes during startup
             crashlytics.log("MainActivity OnCreate: ${e.message}")
         }
+    }
+
+    private fun setupTracking() {
+        val appsFlyerDevKey = BuildConfig.APPSFLYER_DEV_KEY
+        val appsFlyer = AppsFlyerLib.getInstance()
+        if (appsFlyerDevKey.isNotBlank()) {
+            appsFlyer.init(appsFlyerDevKey, null, applicationContext)
+            appsFlyer.start(this)
+            Timber.i("AppsFlyer initialized")
+        }
+
+        val amplitudeApiKey = BuildConfig.AMPLITUDE_API_KEY
+        val amplitude = if (amplitudeApiKey.isBlank()) {
+            Timber.w("Amplitude API key is missing; Amplitude will not be initialized.")
+            null
+        } else {
+            Timber.i("Amplitude initialized")
+            Amplitude(
+                AmplitudeConfiguration(
+                    apiKey = amplitudeApiKey,
+                    context = applicationContext
+                )
+            )
+        }
+
+        analyticsTracker = MultiAnalyticsTracker(
+            context = this,
+            firebaseAnalytics = firebaseAnalytics,
+            appsFlyer = appsFlyer,
+            amplitude = amplitude
+        )
+
+        analyticsTracker.trackEvent(
+            AnalyticsEvents.APP_OPEN,
+            mapOf(
+                AnalyticsParams.SOURCE to "cold_start",
+                AnalyticsParams.PLATFORM to "android"
+            )
+        )
     }
 }
 
@@ -72,6 +129,7 @@ fun WebViewPage(viewModel: MainViewModel) {
         Configuration.ORIENTATION_LANDSCAPE -> {
             println("landscape")
         }
+
         else -> {
             println("portrait")
         }

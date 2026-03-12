@@ -14,9 +14,9 @@ processors:
 console-reports:
   active: true
   exclude:
-     - 'ProjectStatisticsReport'
-     - 'ComplexityReport'
-     - 'NotificationReport'
+    - 'ProjectStatisticsReport'
+    - 'ComplexityReport'
+    - 'NotificationReport'
 
 output-reports:
   active: true
@@ -54,7 +54,7 @@ complexity:
     threshold: 4
   TooManyFunctions:
     active: true
-    excludes: ['**/test/**', '**/androidTest/**', '**/commonTest/**', '**/jvmTest/**', '**/jsTest/**', '**/nativeTest/**', '**/iosTest/**']
+    excludes: [ '**/test/**', '**/androidTest/**', '**/commonTest/**', '**/jvmTest/**', '**/jsTest/**', '**/nativeTest/**', '**/iosTest/**' ]
     thresholdInFiles: 11
     thresholdInClasses: 15
     thresholdInInterfaces: 11
@@ -128,7 +128,7 @@ exceptions:
     active: true
   TooGenericExceptionCaught:
     active: true
-    excludes: ['**/test/**', '**/androidTest/**', '**/commonTest/**', '**/jvmTest/**', '**/jsTest/**', '**/nativeTest/**', '**/iosTest/**', '**/MainActivity.kt']
+    excludes: [ '**/test/**', '**/androidTest/**', '**/commonTest/**', '**/jvmTest/**', '**/jsTest/**', '**/nativeTest/**', '**/iosTest/**', '**/MainActivity.kt' ]
     allowedExceptionNameRegex: '_|(ignore|expected).*'
   TooGenericExceptionThrown:
     active: true
@@ -215,7 +215,7 @@ style:
     maxJumpCount: 1
   MagicNumber:
     active: true
-    excludes: ['**/test/**', '**/androidTest/**', '**/commonTest/**', '**/jvmTest/**', '**/jsTest/**', '**/nativeTest/**', '**/iosTest/**', '**/*.kts']
+    excludes: [ '**/test/**', '**/androidTest/**', '**/commonTest/**', '**/jvmTest/**', '**/jsTest/**', '**/nativeTest/**', '**/iosTest/**', '**/*.kts' ]
     ignoreNumbers:
       - '-1'
       - '0'

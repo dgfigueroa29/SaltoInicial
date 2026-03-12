@@ -12,7 +12,10 @@ class LoadWebsiteUseCase(
 ) {
     operator fun invoke(webView: WebView) {
         val config = repository.getWebViewConfig()
-        (repository as? com.boa.saltoinicial.data.repository.WebViewRepositoryImpl)?.loadUrl(webView, config.url)
+        (repository as? com.boa.saltoinicial.data.repository.WebViewRepositoryImpl)?.loadUrl(
+            webView,
+            config.url
+        )
     }
 }
 
@@ -45,6 +48,8 @@ class HideElementsUseCase(
     private val repository: WebViewRepository
 ) {
     operator fun invoke(webView: WebView) {
-        (repository as? com.boa.saltoinicial.data.repository.WebViewRepositoryImpl)?.hideElements(webView)
+        (repository as? com.boa.saltoinicial.data.repository.WebViewRepositoryImpl)?.hideElements(
+            webView
+        )
     }
 }

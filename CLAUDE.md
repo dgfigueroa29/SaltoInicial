@@ -42,7 +42,7 @@ directamente en los Composables.
 
 - `app/src/main/java/com/boa/saltoinicial/MainActivity.kt` — Entry point. Inicializa Firebase
   Crashlytics y renderiza `WebViewPage`.
-- `app/src/main/java/com/boa/saltoinicial/InfoDialog.kt` — Diálogo Composable que se muestra cuando
+- `app/src/main/java/com/boa/saltoinicial/InfoDiaTimber.kt` — Diálogo Composable que se muestra cuando
   hay error de red (sin conexión).
 - `app/src/main/java/com/boa/utils/Common.kt` — Contiene la URL del sitio (
   `WEB = "https://www.saltoinicial.com.ar/"`) y permisos.

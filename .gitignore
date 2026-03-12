@@ -82,3 +82,5 @@ lint/tmp/
 # lint/reports/
 /.idea/sonarlint/
 /.idea/
+/.kotlin
+/.idea
