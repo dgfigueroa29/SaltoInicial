@@ -30,7 +30,7 @@ Jetpack Compose. Now implements Clean Architecture with domain, data, and presen
 - **UI Components** (`presentation/ui/`): Stateless composables like `LoadingDialog`,
   `MainWebViewClient`
 - **Analytics** (`presentation/analytics/`): `MultiAnalyticsTracker` supporting Firebase, AppsFlyer,
-  and Amplitude tracking; `AnalyticsEvents` and `AnalyticsParams` define event names and parameter
+  Amplitude, and Meta (Facebook) tracking; `AnalyticsEvents` and `AnalyticsParams` define event names and parameter
   constants
 
 ## Key Implementation Details
@@ -84,9 +84,10 @@ class MainViewModelFactory : ViewModelProvider.Factory {
 - **Error Tracking**: Sentry 8.29.0 (initialized in `SaltoInicialApp`)
 - **Logging**: Timber 5.0.1 (debug tree in development)
 - **Analytics**: Multi-provider tracking:
-  - Firebase Analytics 23.0.0
-  - AppsFlyer 6.17.4
-  - Amplitude 1.26.1
+  - Firebase Analytics 23.2.0
+  - AppsFlyer 6.18.0
+  - Amplitude 1.27.0
+  - **Meta (Facebook)**: App Events 17.0.0 for analytics, Audience Network 6.18.0 for ads
 - **Debug Tools**: LeakCanary 2.14 (debugImplementation only)
 - **Testing**: MockK 1.14.9, Turbine 1.2.1, kotlinx-coroutines-test 1.10.2
 
@@ -100,6 +101,7 @@ class MainViewModelFactory : ViewModelProvider.Factory {
   - `APPSFLYER_DEV_KEY` (from `local.properties` or gradle properties)
   - `AMPLITUDE_API_KEY` (from `local.properties` or gradle properties)
   - `SENTRY_DSN` (from `local.properties` or gradle properties)
+  - `FACEBOOK_APP_ID` (from `local.properties` or gradle properties)
 - **Code Quality**: Detekt 1.23.8 configured with HTML, XML, TXT, and SARIF reports
 
 ## Development Workflow
@@ -111,6 +113,7 @@ Required keys in `local.properties` or gradle properties:
 appsFlyerDevKey=YOUR_APPSFLYER_KEY
 amplitudeApiKey=YOUR_AMPLITUDE_KEY
 sentryDsn=YOUR_SENTRY_DSN
+facebookAppId=YOUR_FACEBOOK_APP_ID
 ```
 
 These are injected into `BuildConfig` at compile time and consumed by:
@@ -154,7 +157,7 @@ app/src/main/java/com/boa/saltoinicial/
 │   └── repository/WebViewRepositoryImpl.kt # Data implementations
 ├── presentation/
 │   ├── analytics/
-│   │   └── AnalyticsTracker.kt            # Multi-provider analytics (Firebase, AppsFlyer, Amplitude)
+│   │   └── AnalyticsTracker.kt            # Multi-provider analytics (Firebase, AppsFlyer, Amplitude, Meta)
 │   ├── viewmodel/MainViewModel.kt          # State management
 │   ├── viewmodel/MainViewModelFactory.kt   # DI factory
 │   ├── state/MainState.kt                  # UI state/events

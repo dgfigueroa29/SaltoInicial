@@ -5,6 +5,7 @@ import android.content.Context
 import com.amplitude.android.Amplitude
 import com.google.firebase.analytics.FirebaseAnalytics
 import com.appsflyer.AppsFlyerLib
+import com.facebook.appevents.AppEventsLogger
 
 interface AnalyticsTracker {
     fun trackEvent(
@@ -39,7 +40,8 @@ class MultiAnalyticsTracker(
     private val context: Context,
     private val firebaseAnalytics: FirebaseAnalytics,
     private val appsFlyer: AppsFlyerLib,
-    private val amplitude: Amplitude?
+    private val amplitude: Amplitude?,
+    private val facebookLogger: AppEventsLogger? = null
 ) : AnalyticsTracker {
 
     override fun trackEvent(name: String, params: Map<String, Any?>) {
@@ -68,6 +70,8 @@ class MultiAnalyticsTracker(
             name,
             params.toMutableMap()
         )
+
+        // Facebook
+        facebookLogger?.logEvent(name, params["valueToSum"] as? Double ?: 0.0)
     }
 }
-

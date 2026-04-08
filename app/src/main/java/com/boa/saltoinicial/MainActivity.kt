@@ -25,6 +25,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.amplitude.android.Amplitude
+import com.amplitude.android.Configuration as AmplitudeConfiguration
 import com.appsflyer.AppsFlyerLib
 import com.boa.saltoinicial.presentation.analytics.AnalyticsEvents
 import com.boa.saltoinicial.presentation.analytics.AnalyticsParams
@@ -36,12 +37,14 @@ import com.boa.saltoinicial.presentation.ui.MainWebViewClient
 import com.boa.saltoinicial.presentation.viewmodel.MainViewModel
 import com.boa.saltoinicial.presentation.viewmodel.MainViewModelFactory
 import com.boa.saltoinicial.ui.theme.SaltoInicialTheme
+import com.facebook.FacebookSdk
+import com.facebook.appevents.AppEventsLogger
+import com.facebook.ads.AudienceNetworkAds
 import com.google.firebase.Firebase
 import com.google.firebase.analytics.FirebaseAnalytics
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.google.firebase.crashlytics.crashlytics
 import timber.log.Timber
-import com.amplitude.android.Configuration as AmplitudeConfiguration
 
 class MainActivity : ComponentActivity() {
     private lateinit var firebaseAnalytics: FirebaseAnalytics
@@ -100,11 +103,30 @@ class MainActivity : ComponentActivity() {
             )
         }
 
+        // Initialize Facebook SDK
+        val facebookAppId = BuildConfig.FACEBOOK_APP_ID
+        val facebookLogger = if (facebookAppId.isNotBlank()) {
+            try {
+                FacebookSdk.setApplicationId(facebookAppId)
+                FacebookSdk.sdkInitialize(applicationContext)
+                AudienceNetworkAds.initialize(this)
+                Timber.i("Facebook SDK and Audience Network initialized")
+                AppEventsLogger.newLogger(this)
+            } catch (e: Exception) {
+                Timber.e(e, "Failed to initialize Facebook SDK")
+                null
+            }
+        } else {
+            Timber.w("Facebook App ID is missing; Facebook SDK will not be initialized.")
+            null
+        }
+
         analyticsTracker = MultiAnalyticsTracker(
             context = this,
             firebaseAnalytics = firebaseAnalytics,
             appsFlyer = appsFlyer,
-            amplitude = amplitude
+            amplitude = amplitude,
+            facebookLogger = facebookLogger
         )
 
         analyticsTracker.trackEvent(
