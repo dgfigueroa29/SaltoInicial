@@ -39,11 +39,22 @@ class MainViewModel(
     private var currentWebView: WebView? = null
     private var pageLoadTrace: Trace? = null
 
+    /**
+     * Asocia el [WebView] al ViewModel y dispara la carga inicial del sitio web.
+     * Debe llamarse desde el Composable una vez que el [WebView] es creado.
+     *
+     * @param webView Instancia del WebView a gestionar.
+     */
     fun setWebView(webView: WebView) {
         currentWebView = webView
         loadWebsite()
     }
 
+    /**
+     * Punto de entrada para los eventos de UI siguiendo el patrón MVI.
+     *
+     * @param event Evento disparado desde la UI. Ver [MainUiEvent].
+     */
     fun onEvent(event: MainUiEvent) {
         when (event) {
             MainUiEvent.LoadWebsite -> loadWebsite()
@@ -105,6 +116,12 @@ class MainViewModel(
         )
     }
 
+    /**
+     * Llamado por [MainWebViewClient] cuando el WebView comienza a cargar una página.
+     * Muestra el loading, inicia un trace de Firebase Performance y registra el evento en analítica.
+     *
+     * @param url URL de la página que comenzó a cargar.
+     */
     fun onPageStarted(url: String?) {
         _uiState.value = _uiState.value.copy(isLoading = true)
         pageLoadTrace?.stop()
@@ -123,6 +140,13 @@ class MainViewModel(
         updateBackNavigationState()
     }
 
+    /**
+     * Llamado por [MainWebViewClient] cuando el WebView finaliza de cargar una página.
+     * Oculta el loading, detiene el trace de Firebase Performance, registra el evento en analítica
+     * y ejecuta [HideElementsUseCase] para ocultar elementos HTML no deseados del blog.
+     *
+     * @param url URL de la página que terminó de cargar.
+     */
     fun onPageFinished(url: String?) {
         _uiState.value = _uiState.value.copy(isLoading = false)
         pageLoadTrace?.apply {
@@ -152,6 +176,14 @@ class MainViewModel(
         }
     }
 
+    /**
+     * Llamado por [MainWebViewClient] cuando el WebView recibe un error de carga.
+     * Delega el manejo al [HandleWebViewErrorUseCase], registra el evento en analítica
+     * y muestra el diálogo de error con título y descripción según el tipo de error.
+     *
+     * @param error Error recibido del WebView. Ver [WebViewError].
+     * @param failingUrl URL que causó el error, o `null` si no está disponible.
+     */
     fun onError(error: WebViewError, failingUrl: String?) {
         handleWebViewErrorUseCase(error)
         val (title, description, type) = when (error) {

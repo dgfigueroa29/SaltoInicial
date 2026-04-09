@@ -5,6 +5,13 @@ import android.os.StrictMode
 import io.sentry.android.core.SentryAndroid
 import timber.log.Timber
 
+/**
+ * Application class para SaltoInicial.
+ *
+ * Inicializa StrictMode en debug para detectar accesos al disco/red en el hilo principal,
+ * y configura Sentry para el monitoreo de errores en producción si el DSN está disponible
+ * en [BuildConfig.SENTRY_DSN].
+ */
 class SaltoInicialApp : Application() {
 
     override fun onCreate() {

@@ -26,6 +26,18 @@ private val LightColorScheme = lightColorScheme(
     tertiary = Pink40
 )
 
+/**
+ * Tema principal de la aplicación basado en Material 3.
+ *
+ * Soporta colores dinámicos (Android 12+), modo oscuro y claro.
+ * Cuando [dynamicColor] es `true` y el dispositivo corre Android S o superior,
+ * utiliza los colores del sistema (Material You). En caso contrario usa [DarkColorScheme]
+ * o [LightColorScheme] según [darkTheme].
+ *
+ * @param darkTheme Si es `true` aplica el esquema oscuro. Por defecto sigue la configuración del sistema.
+ * @param dynamicColor Si es `true` usa colores dinámicos del sistema (solo Android 12+).
+ * @param content Contenido Composable al que se aplica el tema.
+ */
 @Composable
 fun SaltoInicialTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),

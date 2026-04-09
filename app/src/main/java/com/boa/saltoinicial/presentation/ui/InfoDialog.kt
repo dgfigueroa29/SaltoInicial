@@ -26,6 +26,16 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.boa.saltoinicial.R
 
+/**
+ * Diálogo informativo que se muestra ante errores de red u otros eventos importantes.
+ *
+ * Muestra el logo de la app, un título, una descripción y un botón de confirmación.
+ * El diálogo ocupa toda la pantalla y solo se cierra a través del botón OK o [onDismiss].
+ *
+ * @param title Título del diálogo. Por defecto vacío.
+ * @param desc Descripción o mensaje detallado del error. Por defecto vacío.
+ * @param onDismiss Callback invocado cuando el usuario cierra el diálogo.
+ */
 @Composable
 fun InfoDialog(
     title: String? = "",

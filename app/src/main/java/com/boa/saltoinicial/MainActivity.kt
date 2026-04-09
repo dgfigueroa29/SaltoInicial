@@ -43,6 +43,14 @@ import com.google.firebase.crashlytics.crashlytics
 import timber.log.Timber
 import com.amplitude.android.Configuration as AmplitudeConfiguration
 
+/**
+ * Activity principal de la aplicación.
+ *
+ * Inicializa Firebase Analytics, Crashlytics, AppsFlyer y Amplitude mediante [setupTracking],
+ * luego renderiza [WebViewPage] dentro del tema [SaltoInicialTheme].
+ * Los errores durante la inicialización de la UI se capturan y se reportan a Crashlytics
+ * para evitar crashes silenciosos en producción.
+ */
 class MainActivity : ComponentActivity() {
     private lateinit var firebaseAnalytics: FirebaseAnalytics
     private lateinit var analyticsTracker: MultiAnalyticsTracker
@@ -77,6 +85,12 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    /**
+     * Configura e inicializa los SDKs de analítica: AppsFlyer y Amplitude.
+     * Si alguna clave de API está en blanco (no configurada en [BuildConfig]),
+     * el SDK correspondiente no se inicializa y se registra una advertencia en Timber.
+     * Finalmente crea [MultiAnalyticsTracker] y envía el evento [AnalyticsEvents.APP_OPEN].
+     */
     private fun setupTracking() {
         val appsFlyerDevKey = BuildConfig.APPSFLYER_DEV_KEY
         val appsFlyer = AppsFlyerLib.getInstance()
@@ -117,6 +131,15 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+/**
+ * Composable principal que embebe el [WebView] de la app.
+ *
+ * Observa el [MainUiState] del [viewModel] para mostrar el [LoadingDialog] durante la carga
+ * y el [InfoDialog] ante errores de red. En modo preview (LayoutLib) muestra un placeholder
+ * ya que [WebView] no es compatible con Compose Preview.
+ *
+ * @param viewModel ViewModel que gestiona el estado del WebView.
+ */
 @SuppressLint("SetJavaScriptEnabled")
 @Composable
 fun WebViewPage(viewModel: MainViewModel) {

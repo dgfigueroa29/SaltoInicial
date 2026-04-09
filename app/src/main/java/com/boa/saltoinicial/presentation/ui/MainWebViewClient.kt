@@ -15,6 +15,10 @@ class MainWebViewClient(
     private val viewModel: MainViewModel
 ) : WebViewClient() {
 
+    /**
+     * Notifica al [MainViewModel] cuando ocurre un error de red o recurso.
+     * Convierte el error nativo en [WebViewError.NetworkError] antes de delegarlo.
+     */
     override fun onReceivedError(
         view: WebView?,
         request: WebResourceRequest?,
@@ -28,11 +32,13 @@ class MainWebViewClient(
         viewModel.onError(webViewError, failingUrl)
     }
 
+    /** Notifica al [MainViewModel] que el WebView comenzó a cargar una página. */
     override fun onPageStarted(view: WebView, url: String?, favicon: Bitmap?) {
         super.onPageStarted(view, url, favicon)
         viewModel.onPageStarted(url)
     }
 
+    /** Notifica al [MainViewModel] que el WebView terminó de cargar una página. */
     override fun onPageFinished(view: WebView?, url: String?) {
         super.onPageFinished(view, url)
         viewModel.onPageFinished(url)

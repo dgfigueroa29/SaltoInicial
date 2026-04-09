@@ -1,3 +1,9 @@
+/**
+ * Paleta de colores base del tema Material 3 de SaltoInicial.
+ *
+ * Los colores con sufijo `80` se usan en esquemas oscuros (dark theme),
+ * y los colores con sufijo `40` en esquemas claros (light theme).
+ */
 package com.boa.saltoinicial.ui.theme
 
 import androidx.compose.ui.graphics.Color

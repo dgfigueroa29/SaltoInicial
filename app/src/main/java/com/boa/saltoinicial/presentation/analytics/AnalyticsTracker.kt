@@ -6,13 +6,27 @@ import com.amplitude.android.Amplitude
 import com.google.firebase.analytics.FirebaseAnalytics
 import com.appsflyer.AppsFlyerLib
 
+/**
+ * Contrato para el registro de eventos de analítica.
+ *
+ * Permite desacoplar la lógica de negocio de implementaciones concretas de SDKs
+ * (Firebase, AppsFlyer, Amplitude). Ver [MultiAnalyticsTracker] para la implementación
+ * que envía a múltiples proveedores simultáneamente.
+ */
 interface AnalyticsTracker {
+    /**
+     * Registra un evento con nombre y parámetros opcionales.
+     *
+     * @param name Nombre del evento. Usar las constantes de [AnalyticsEvents].
+     * @param params Mapa de parámetros clave-valor. Usar las constantes de [AnalyticsParams].
+     */
     fun trackEvent(
         name: String,
         params: Map<String, Any?> = emptyMap()
     )
 }
 
+/** Nombres de eventos de analítica registrados en la app. */
 object AnalyticsEvents {
     const val APP_OPEN = "app_open"
     const val SCREEN_VIEW = "screen_view"
@@ -24,6 +38,7 @@ object AnalyticsEvents {
     const val NAVIGATION_BACK = "navigation_back"
 }
 
+/** Claves de parámetros para los eventos de analítica. */
 object AnalyticsParams {
     const val SCREEN = "screen"
     const val URL = "url"
@@ -35,6 +50,15 @@ object AnalyticsParams {
     const val PLATFORM = "platform"
 }
 
+/**
+ * Implementación de [AnalyticsTracker] que envía eventos a múltiples proveedores en paralelo:
+ * Firebase Analytics, AppsFlyer y Amplitude (opcional).
+ *
+ * @param context Contexto de la aplicación requerido por AppsFlyer.
+ * @param firebaseAnalytics Instancia de Firebase Analytics.
+ * @param appsFlyer Instancia de AppsFlyer SDK.
+ * @param amplitude Instancia de Amplitude. Si es `null`, no se envían eventos a Amplitude.
+ */
 class MultiAnalyticsTracker(
     private val context: Context,
     private val firebaseAnalytics: FirebaseAnalytics,
