@@ -1,17 +1,17 @@
 [versions]
 #noinspection AndroidGradlePluginVersion
 agp = "9.1.0"
-firebase-bom = "34.10.0"
+firebase-bom = "34.11.0"
 core-ktx = "1.18.0"
 junit = "4.13.2"
 androidx-test-ext-junit = "1.3.0"
 espresso-core = "3.7.0"
 lifecycle-runtime-ktx = "2.10.0"
 activity-compose = "1.13.0"
-compose-bom = "2026.03.00"
+compose-bom = "2026.03.01"
 crashlytics = "3.0.6"
 services = "4.4.4"
-analytics = "23.0.0"
+analytics = "23.2.0"
 app-crashlytics = "20.0.4"
 lifecycle-viewmodel-compose = "2.10.0"
 mockk = "1.14.9"
@@ -20,12 +20,14 @@ kotlinx-coroutines-test = "1.10.2"
 detekt = "1.23.8"
 #noinspection NewerVersionAvailable
 kotlin = "2.3.10"
-appsflyer = "6.17.6"
+appsflyer = "6.18.0"
 install-referrer = "2.2"
-amplitude = "1.26.1"
-sentry = "8.34.1"
+amplitude = "1.27.0"
+sentry = "8.37.1"
 timber = "5.0.1"
 leakcanary = "2.14"
+facebook = "17.0.0"
+audience-network = "6.18.0"
 
 [libraries]
 core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "core-ktx" }
@@ -56,6 +58,8 @@ sentry = { group = "io.sentry", name = "sentry-android", version.ref = "sentry" 
 timber = { group = "com.jakewharton.timber", name = "timber", version.ref = "timber" }
 leakcanary = { group = "com.squareup.leakcanary", name = "leakcanary-android", version.ref = "leakcanary" }
 firebase-perf = { group = "com.google.firebase", name = "firebase-perf" }
+facebook = { group = "com.facebook.android", name = "facebook-android-sdk", version.ref = "facebook" }
+audience-network = { group = "com.facebook.android", name = "audience-network-sdk", version.ref = "audience-network" }
 
 [plugins]
 com-android-application = { id = "com.android.application", version.ref = "agp" }

@@ -15,17 +15,20 @@ val localProps = Properties().apply {
     }
 }
 
+val facebookAppId = (project.findProperty("facebookAppId") as String?)
+    ?: localProps.getProperty("facebookAppId", "")
+
 android {
     namespace = "com.boa.saltoinicial"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.boa.saltoinicial"
         minSdk = 23
         //noinspection EditedTargetSdkVersion
-        targetSdk = 36
-        versionCode = 5
-        versionName = "1.5"
+        targetSdk = 37
+        versionCode = 6
+        versionName = "1.6"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -42,15 +45,20 @@ android {
         buildConfigField("String", "APPSFLYER_DEV_KEY", "\"$appsFlyerDevKey\"")
         buildConfigField("String", "AMPLITUDE_API_KEY", "\"$amplitudeApiKey\"")
         buildConfigField("String", "SENTRY_DSN", "\"$sentryDsn\"")
+        buildConfigField("String", "FACEBOOK_APP_ID", "\"$facebookAppId\"")
     }
 
     buildTypes {
+        debug {
+            manifestPlaceholders["facebookAppId"] = facebookAppId
+        }
         release {
             isMinifyEnabled = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            manifestPlaceholders["facebookAppId"] = facebookAppId
         }
     }
     compileOptions {
@@ -93,6 +101,8 @@ dependencies {
     implementation(libs.amplitude)
     implementation(libs.sentry)
     implementation(libs.timber)
+    implementation(libs.facebook)
+    implementation(libs.audience.network)
     implementation(libs.core.ktx)
     implementation(libs.lifecycle.runtime.ktx)
     implementation(libs.lifecycle.viewmodel.compose)
@@ -117,6 +127,7 @@ dependencies {
 
 detekt {
     toolVersion = libs.versions.detekt.get()
+    @Suppress("DEPRECATION")
     config = files("$projectDir/../config/detekt/detekt.yml")
     buildUponDefaultConfig = true
     autoCorrect = true
