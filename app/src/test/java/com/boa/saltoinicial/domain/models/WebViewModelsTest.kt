@@ -1,3 +1,5 @@
+@file:Suppress("USELESS_IS_CHECK")
+
 package com.boa.saltoinicial.domain.models
 
 import org.junit.Assert.assertEquals

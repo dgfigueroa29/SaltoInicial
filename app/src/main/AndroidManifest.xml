@@ -30,10 +30,19 @@
             android:name="com.facebook.sdk.ApplicationId"
             android:value="${facebookAppId}" />
 
+        <!-- Facebook Client Token -->
+        <meta-data
+            android:name="com.facebook.sdk.ClientToken"
+            android:value="${facebookClientToken}" />
+
         <!-- Audience Network -->
         <meta-data
             android:name="com.facebook.sdk.AdvertisingIdCollectionEnabled"
             android:value="true" />
+        <meta-data android:name="com.facebook.sdk.AutoLogAppEventsEnabled"
+            android:value="false"/>
+        <meta-data android:name="com.facebook.sdk.AdvertiserIDCollectionEnabled"
+            android:value="false"/>
 
         <activity
             android:name=".MainActivity"

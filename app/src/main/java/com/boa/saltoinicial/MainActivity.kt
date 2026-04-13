@@ -24,8 +24,8 @@ import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.amplitude.android.Amplitude
-import com.amplitude.android.Configuration as AmplitudeConfiguration
+import com.amplitude.android.autocaptureOptions
+import com.amplitude.core.Amplitude
 import com.appsflyer.AppsFlyerLib
 import com.boa.saltoinicial.presentation.analytics.AnalyticsEvents
 import com.boa.saltoinicial.presentation.analytics.AnalyticsParams
@@ -45,6 +45,7 @@ import com.google.firebase.analytics.FirebaseAnalytics
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.google.firebase.crashlytics.crashlytics
 import timber.log.Timber
+import java.util.Collections.addAll
 
 /**
  * Activity principal de la aplicación.
@@ -92,7 +93,7 @@ class MainActivity : ComponentActivity() {
      * Configura e inicializa los SDKs de analítica: AppsFlyer y Amplitude.
      * Si alguna clave de API está en blanco (no configurada en [BuildConfig]),
      * el SDK correspondiente no se inicializa y se registra una advertencia en Timber.
-     * Finalmente crea [MultiAnalyticsTracker] y envía el evento [AnalyticsEvents.APP_OPEN].
+     * Finalmente, crea [MultiAnalyticsTracker] y envía el evento [AnalyticsEvents.APP_OPEN].
      */
     private fun setupTracking() {
         val appsFlyerDevKey = BuildConfig.APPSFLYER_DEV_KEY
@@ -110,19 +111,24 @@ class MainActivity : ComponentActivity() {
         } else {
             Timber.i("Amplitude initialized")
             Amplitude(
-                AmplitudeConfiguration(
+                configuration = com.amplitude.core.Configuration(
                     apiKey = amplitudeApiKey,
-                    context = applicationContext
+                    offline = true,
+                    useBatch = true
                 )
             )
         }
 
         // Initialize Facebook SDK
         val facebookAppId = BuildConfig.FACEBOOK_APP_ID
+        val facebookClientToken = BuildConfig.FACEBOOK_CLIENT_TOKEN
         val facebookLogger = if (facebookAppId.isNotBlank()) {
             try {
                 FacebookSdk.setApplicationId(facebookAppId)
-                FacebookSdk.sdkInitialize(applicationContext)
+                if (facebookClientToken.isNotBlank()) {
+                    FacebookSdk.setClientToken(facebookClientToken)
+                }
+                FacebookSdk.fullyInitialize()
                 AudienceNetworkAds.initialize(this)
                 Timber.i("Facebook SDK and Audience Network initialized")
                 AppEventsLogger.newLogger(this)
@@ -144,8 +150,8 @@ class MainActivity : ComponentActivity() {
         )
 
         analyticsTracker.trackEvent(
-            AnalyticsEvents.APP_OPEN,
-            mapOf(
+            name = AnalyticsEvents.APP_OPEN,
+            params = mapOf(
                 AnalyticsParams.SOURCE to "cold_start",
                 AnalyticsParams.PLATFORM to "android"
             )
@@ -156,7 +162,7 @@ class MainActivity : ComponentActivity() {
 /**
  * Composable principal que embebe el [WebView] de la app.
  *
- * Observa el [MainUiState] del [viewModel] para mostrar el [LoadingDialog] durante la carga
+ * Observa el MainUiState del [viewModel] para mostrar el [LoadingDialog] durante la carga
  * y el [InfoDialog] ante errores de red. En modo preview (LayoutLib) muestra un placeholder
  * ya que [WebView] no es compatible con Compose Preview.
  *

@@ -84,4 +84,4 @@ lint/tmp/
 /.idea/
 /.kotlin
 /.idea
-/.idea
+*.json

@@ -1,3 +1,5 @@
+@file:Suppress("SameReturnValue")
+
 package com.boa.saltoinicial.domain.repository
 
 import com.boa.saltoinicial.domain.models.WebViewConfig

@@ -2,7 +2,7 @@ package com.boa.saltoinicial.presentation.analytics
 
 import android.os.Bundle
 import android.content.Context
-import com.amplitude.android.Amplitude
+import com.amplitude.core.Amplitude
 import com.google.firebase.analytics.FirebaseAnalytics
 import com.appsflyer.AppsFlyerLib
 import com.facebook.appevents.AppEventsLogger
@@ -91,11 +91,14 @@ class MultiAnalyticsTracker(
 
         // Amplitude
         amplitude?.track(
-            name,
-            params.toMutableMap()
+            eventType = name,
+            eventProperties = params.toMutableMap()
         )
 
         // Facebook
-        facebookLogger?.logEvent(name, params["valueToSum"] as? Double ?: 0.0)
+        facebookLogger?.logEvent(
+            eventName = name,
+            valueToSum = params["valueToSum"] as? Double ?: 0.0
+        )
     }
 }

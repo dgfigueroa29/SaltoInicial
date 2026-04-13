@@ -16,7 +16,9 @@ val localProps = Properties().apply {
 }
 
 val facebookAppId = (project.findProperty("facebookAppId") as String?)
-    ?: localProps.getProperty("facebookAppId", "")
+    ?: localProps.getProperty("facebookAppId", "") ?: ""
+val facebookClientToken = (project.findProperty("facebookClientToken") as String?)
+    ?: localProps.getProperty("facebookClientToken", "") ?: ""
 
 android {
     namespace = "com.boa.saltoinicial"
@@ -46,11 +48,13 @@ android {
         buildConfigField("String", "AMPLITUDE_API_KEY", "\"$amplitudeApiKey\"")
         buildConfigField("String", "SENTRY_DSN", "\"$sentryDsn\"")
         buildConfigField("String", "FACEBOOK_APP_ID", "\"$facebookAppId\"")
+        buildConfigField("String", "FACEBOOK_CLIENT_TOKEN", "\"$facebookClientToken\"")
     }
 
     buildTypes {
         debug {
             manifestPlaceholders["facebookAppId"] = facebookAppId
+            manifestPlaceholders["facebookClientToken"] = facebookClientToken
         }
         release {
             isMinifyEnabled = true
@@ -59,6 +63,7 @@ android {
                 "proguard-rules.pro"
             )
             manifestPlaceholders["facebookAppId"] = facebookAppId
+            manifestPlaceholders["facebookClientToken"] = facebookClientToken
         }
     }
     compileOptions {
