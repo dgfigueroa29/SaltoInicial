@@ -57,6 +57,7 @@ android {
             manifestPlaceholders["facebookClientToken"] = facebookClientToken
         }
         release {
+            manifestPlaceholders += mapOf()
             isMinifyEnabled = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
