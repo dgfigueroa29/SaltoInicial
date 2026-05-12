@@ -85,3 +85,4 @@ lint/tmp/
 /.kotlin
 /.idea
 *.json
+.settings/

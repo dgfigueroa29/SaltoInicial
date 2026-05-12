@@ -141,7 +141,7 @@ class MainViewModel(
     }
 
     /**
-     * Llamado por [MainWebViewClient] cuando el WebView finaliza de cargar una página.
+     * Llamado por MainWebViewClient cuando el WebView finaliza de cargar una página.
      * Oculta el loading, detiene el trace de Firebase Performance, registra el evento en analítica
      * y ejecuta [HideElementsUseCase] para ocultar elementos HTML no deseados del blog.
      *

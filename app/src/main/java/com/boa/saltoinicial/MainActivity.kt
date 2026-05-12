@@ -3,6 +3,7 @@ package com.boa.saltoinicial
 import android.annotation.SuppressLint
 import android.content.res.Configuration
 import android.os.Bundle
+import android.os.StrictMode
 import android.view.ViewGroup
 import android.webkit.WebView
 import androidx.activity.ComponentActivity
@@ -24,7 +25,6 @@ import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.amplitude.android.autocaptureOptions
 import com.amplitude.core.Amplitude
 import com.appsflyer.AppsFlyerLib
 import com.boa.saltoinicial.presentation.analytics.AnalyticsEvents
@@ -38,19 +38,20 @@ import com.boa.saltoinicial.presentation.viewmodel.MainViewModel
 import com.boa.saltoinicial.presentation.viewmodel.MainViewModelFactory
 import com.boa.saltoinicial.ui.theme.SaltoInicialTheme
 import com.facebook.FacebookSdk
-import com.facebook.appevents.AppEventsLogger
 import com.facebook.ads.AudienceNetworkAds
+import com.facebook.appevents.AppEventsLogger
 import com.google.firebase.Firebase
 import com.google.firebase.analytics.FirebaseAnalytics
-import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.google.firebase.crashlytics.crashlytics
+import com.mixpanel.android.mpmetrics.MixpanelAPI
+import com.newrelic.agent.android.NewRelic
 import timber.log.Timber
-import java.util.Collections.addAll
 
 /**
  * Activity principal de la aplicación.
  *
- * Inicializa Firebase Analytics, Crashlytics, AppsFlyer y Amplitude mediante [setupTracking],
+ * Inicializa New Relic (si hay token), Firebase Analytics, Crashlytics, AppsFlyer, Amplitude
+ * y Mixpanel mediante [setupTracking],
  * luego renderiza [WebViewPage] dentro del tema [SaltoInicialTheme].
  * Los errores durante la inicialización de la UI se capturan y se reportan a Crashlytics
  * para evitar crashes silenciosos en producción.
@@ -61,10 +62,26 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        firebaseAnalytics = FirebaseAnalytics.getInstance(this)
-        firebaseAnalytics.logEvent(FirebaseAnalytics.Event.APP_OPEN, null)
-        setupTracking()
-        val crashlytics: FirebaseCrashlytics = Firebase.crashlytics
+
+        // Permitir lectura de disco en el hilo principal para la inicialización de los SDK,
+        // que de lo contrario lanza una violación de StrictMode en debug.
+        val oldPolicy = StrictMode.allowThreadDiskReads()
+        val crashlytics = Firebase.crashlytics
+        try {
+            val newRelicToken = BuildConfig.NEW_RELIC_APP_TOKEN
+            if (newRelicToken.isNotBlank()) {
+                NewRelic.withApplicationToken(newRelicToken).start(applicationContext)
+                Timber.i("New Relic started")
+            } else {
+                Timber.w("New Relic app token is missing; agent will not start.")
+            }
+            firebaseAnalytics = FirebaseAnalytics.getInstance(this)
+            firebaseAnalytics.logEvent(FirebaseAnalytics.Event.APP_OPEN, null)
+            setupTracking()
+        } finally {
+            StrictMode.setThreadPolicy(oldPolicy)
+        }
+
         try {
             setContent {
                 SaltoInicialTheme {
@@ -90,7 +107,7 @@ class MainActivity : ComponentActivity() {
     }
 
     /**
-     * Configura e inicializa los SDKs de analítica: AppsFlyer y Amplitude.
+     * Configura e inicializa los SDK de analítica: AppsFlyer, Amplitude y Mixpanel.
      * Si alguna clave de API está en blanco (no configurada en [BuildConfig]),
      * el SDK correspondiente no se inicializa y se registra una advertencia en Timber.
      * Finalmente, crea [MultiAnalyticsTracker] y envía el evento [AnalyticsEvents.APP_OPEN].
@@ -118,7 +135,35 @@ class MainActivity : ComponentActivity() {
                 )
             )
         }
+        val facebookLogger = getFacebookLogger()
+        val mixpanelToken = BuildConfig.MIXPANEL_PROJECT_TOKEN
+        val mixpanel = if (mixpanelToken.isBlank()) {
+            Timber.w("Mixpanel project token is missing; Mixpanel will not be initialized.")
+            null
+        } else {
+            Timber.i("Mixpanel initialized")
+            MixpanelAPI.getInstance(applicationContext, mixpanelToken, false)
+        }
 
+        analyticsTracker = MultiAnalyticsTracker(
+            context = this,
+            firebaseAnalytics = firebaseAnalytics,
+            appsFlyer = appsFlyer,
+            amplitude = amplitude,
+            facebookLogger = facebookLogger,
+            mixpanel = mixpanel
+        )
+
+        analyticsTracker.trackEvent(
+            name = AnalyticsEvents.APP_OPEN,
+            params = mapOf(
+                AnalyticsParams.SOURCE to "cold_start",
+                AnalyticsParams.PLATFORM to "android"
+            )
+        )
+    }
+
+    private fun getFacebookLogger(): AppEventsLogger? {
         // Initialize Facebook SDK
         val facebookAppId = BuildConfig.FACEBOOK_APP_ID
         val facebookClientToken = BuildConfig.FACEBOOK_CLIENT_TOKEN
@@ -140,22 +185,7 @@ class MainActivity : ComponentActivity() {
             Timber.w("Facebook App ID is missing; Facebook SDK will not be initialized.")
             null
         }
-
-        analyticsTracker = MultiAnalyticsTracker(
-            context = this,
-            firebaseAnalytics = firebaseAnalytics,
-            appsFlyer = appsFlyer,
-            amplitude = amplitude,
-            facebookLogger = facebookLogger
-        )
-
-        analyticsTracker.trackEvent(
-            name = AnalyticsEvents.APP_OPEN,
-            params = mapOf(
-                AnalyticsParams.SOURCE to "cold_start",
-                AnalyticsParams.PLATFORM to "android"
-            )
-        )
+        return facebookLogger
     }
 }
 
@@ -163,7 +193,7 @@ class MainActivity : ComponentActivity() {
  * Composable principal que embebe el [WebView] de la app.
  *
  * Observa el MainUiState del [viewModel] para mostrar el [LoadingDialog] durante la carga
- * y el [InfoDialog] ante errores de red. En modo preview (LayoutLib) muestra un placeholder
+ * y el [InfoDialog] ante errores de red. En modo preview (LayoutLib) muestra un placeholder,
  * ya que [WebView] no es compatible con Compose Preview.
  *
  * @param viewModel ViewModel que gestiona el estado del WebView.
@@ -201,22 +231,27 @@ fun WebViewPage(viewModel: MainViewModel) {
     } else {
         AndroidView(
             factory = {
-                WebView(it).apply {
-                    layoutParams = ViewGroup.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        ViewGroup.LayoutParams.MATCH_PARENT
-                    )
+                val oldPolicy = StrictMode.allowThreadDiskReads()
+                try {
+                    WebView(it).apply {
+                        layoutParams = ViewGroup.LayoutParams(
+                            ViewGroup.LayoutParams.MATCH_PARENT,
+                            ViewGroup.LayoutParams.MATCH_PARENT
+                        )
 
-                    // Configure WebView settings
-                    settings.javaScriptEnabled = true
-                    settings.userAgentString = System.getProperty("http.agent")
-                    settings.useWideViewPort = true
+                        // Configure WebView settings
+                        settings.javaScriptEnabled = true
+                        settings.userAgentString = System.getProperty("http.agent")
+                        settings.useWideViewPort = true
 
-                    // Set custom WebViewClient
-                    webViewClient = MainWebViewClient(viewModel)
+                        // Set custom WebViewClient
+                        webViewClient = MainWebViewClient(viewModel)
 
-                    // Set WebView in ViewModel
-                    viewModel.setWebView(this)
+                        // Set WebView in ViewModel
+                        viewModel.setWebView(this)
+                    }
+                } finally {
+                    StrictMode.setThreadPolicy(oldPolicy)
                 }
             }
         )

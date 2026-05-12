@@ -1,16 +1,20 @@
+@file:Suppress("GrazieInspection")
+
 package com.boa.saltoinicial.presentation.analytics
 
-import android.os.Bundle
 import android.content.Context
+import android.os.Bundle
 import com.amplitude.core.Amplitude
-import com.google.firebase.analytics.FirebaseAnalytics
 import com.appsflyer.AppsFlyerLib
 import com.facebook.appevents.AppEventsLogger
+import com.google.firebase.analytics.FirebaseAnalytics
+import com.mixpanel.android.mpmetrics.MixpanelAPI
+import org.json.JSONObject
 
 /**
  * Contrato para el registro de eventos de analítica.
  *
- * Permite desacoplar la lógica de negocio de implementaciones concretas de SDKs
+ * Permite desacoplar la lógica de negocio de implementaciones concretas de SDK
  * (Firebase, AppsFlyer, Amplitude). Ver [MultiAnalyticsTracker] para la implementación
  * que envía a múltiples proveedores simultáneamente.
  */
@@ -53,37 +57,26 @@ object AnalyticsParams {
 
 /**
  * Implementación de [AnalyticsTracker] que envía eventos a múltiples proveedores en paralelo:
- * Firebase Analytics, AppsFlyer y Amplitude (opcional).
+ * Firebase Analytics, AppsFlyer, Amplitude (opcional) y Mixpanel (opcional).
  *
  * @param context Contexto de la aplicación requerido por AppsFlyer.
  * @param firebaseAnalytics Instancia de Firebase Analytics.
  * @param appsFlyer Instancia de AppsFlyer SDK.
  * @param amplitude Instancia de Amplitude. Si es `null`, no se envían eventos a Amplitude.
+ * @param mixpanel Instancia de Mixpanel. Si es `null`, no se envían eventos a Mixpanel.
  */
 class MultiAnalyticsTracker(
     private val context: Context,
     private val firebaseAnalytics: FirebaseAnalytics,
     private val appsFlyer: AppsFlyerLib,
     private val amplitude: Amplitude?,
-    private val facebookLogger: AppEventsLogger? = null
+    private val facebookLogger: AppEventsLogger? = null,
+    private val mixpanel: MixpanelAPI? = null
 ) : AnalyticsTracker {
 
     override fun trackEvent(name: String, params: Map<String, Any?>) {
         // Firebase
-        val bundle = Bundle().apply {
-            params.forEach { (key, value) ->
-                when (value) {
-                    is String -> putString(key, value)
-                    is Int -> putInt(key, value)
-                    is Long -> putLong(key, value)
-                    is Double -> putDouble(key, value)
-                    is Boolean -> putString(key, value.toString())
-                    null -> Unit
-                    else -> putString(key, value.toString())
-                }
-            }
-        }
-        firebaseAnalytics.logEvent(name, bundle)
+        firebaseAnalytics.logEvent(name, params.toBundle())
 
         // AppsFlyer
         val afParams = params.mapValues { it.value?.toString().orEmpty() }
@@ -98,7 +91,37 @@ class MultiAnalyticsTracker(
         // Facebook
         facebookLogger?.logEvent(
             eventName = name,
-            valueToSum = params["valueToSum"] as? Double ?: 0.0
+            valueToSum = params["valueToSum"] as? Double ?: 0.0,
+            parameters = params.toBundle()
         )
+
+        // Mixpanel
+        mixpanel?.track(name, params.toJSONObject())
+    }
+}
+
+private fun Map<String, Any?>.toBundle(): Bundle = Bundle().apply {
+    forEach { (key, value) ->
+        when (value) {
+            is String -> putString(key, value)
+            is Int -> putInt(key, value)
+            is Long -> putLong(key, value)
+            is Double -> putDouble(key, value)
+            is Float -> putFloat(key, value)
+            is Boolean -> putBoolean(key, value)
+            null -> Unit
+            else -> putString(key, value.toString())
+        }
+    }
+}
+
+private fun Map<String, Any?>.toJSONObject(): JSONObject = JSONObject().apply {
+    forEach { (key, value) ->
+        when (value) {
+            null -> Unit
+            is String, is Int, is Long, is Double, is Boolean -> put(key, value)
+            is Float -> put(key, value.toDouble())
+            else -> put(key, value.toString())
+        }
     }
 }

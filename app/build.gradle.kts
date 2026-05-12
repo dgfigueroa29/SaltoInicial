@@ -6,6 +6,7 @@ plugins {
     alias(libs.plugins.crashlytics)
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.detekt)
+    alias(libs.plugins.newrelic)
 }
 
 val localProps = Properties().apply {
@@ -26,7 +27,7 @@ android {
 
     defaultConfig {
         applicationId = "com.boa.saltoinicial"
-        minSdk = 23
+        minSdk = 24
         //noinspection EditedTargetSdkVersion
         targetSdk = 37
         versionCode = 6
@@ -43,10 +44,16 @@ android {
             ?: localProps.getProperty("amplitudeApiKey", "")
         val sentryDsn = (project.findProperty("sentryDsn") as String?)
             ?: localProps.getProperty("sentryDsn", "")
+        val newRelicAppToken = (project.findProperty("newRelicAppToken") as String?)
+            ?: localProps.getProperty("newRelicAppToken", "")
+        val mixpanelProjectToken = (project.findProperty("mixpanelProjectToken") as String?)
+            ?: localProps.getProperty("mixpanelProjectToken", "")
 
         buildConfigField("String", "APPSFLYER_DEV_KEY", "\"$appsFlyerDevKey\"")
         buildConfigField("String", "AMPLITUDE_API_KEY", "\"$amplitudeApiKey\"")
         buildConfigField("String", "SENTRY_DSN", "\"$sentryDsn\"")
+        buildConfigField("String", "NEW_RELIC_APP_TOKEN", "\"$newRelicAppToken\"")
+        buildConfigField("String", "MIXPANEL_PROJECT_TOKEN", "\"$mixpanelProjectToken\"")
         buildConfigField("String", "FACEBOOK_APP_ID", "\"$facebookAppId\"")
         buildConfigField("String", "FACEBOOK_CLIENT_TOKEN", "\"$facebookClientToken\"")
     }
@@ -59,6 +66,7 @@ android {
         release {
             manifestPlaceholders += mapOf()
             isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -105,6 +113,8 @@ dependencies {
     implementation(libs.appsflyer)
     implementation(libs.install.referrer)
     implementation(libs.amplitude)
+    implementation(libs.mixpanel.android)
+    implementation(libs.newrelic.android.agent)
     implementation(libs.sentry)
     implementation(libs.timber)
     implementation(libs.facebook)

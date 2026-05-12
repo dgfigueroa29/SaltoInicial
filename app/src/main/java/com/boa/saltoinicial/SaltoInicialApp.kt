@@ -40,11 +40,17 @@ class SaltoInicialApp : Application() {
         val dsn = BuildConfig.SENTRY_DSN
 
         if (dsn.isNotBlank()) {
-            SentryAndroid.init(this) { options ->
-                options.dsn = dsn
-                options.isEnableAutoSessionTracking = true
-                options.isEnableNdk = true
-                options.tracesSampleRate = 1.0
+            // Sentry initialization may perform disk reads on the main thread
+            val oldPolicy = StrictMode.allowThreadDiskReads()
+            try {
+                SentryAndroid.init(this) { options ->
+                    options.dsn = dsn
+                    options.isEnableAutoSessionTracking = true
+                    options.isEnableNdk = true
+                    options.tracesSampleRate = 1.0
+                }
+            } finally {
+                StrictMode.setThreadPolicy(oldPolicy)
             }
             Timber.i("Sentry initialized")
         }

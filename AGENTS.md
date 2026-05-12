@@ -30,7 +30,8 @@ Jetpack Compose. Now implements Clean Architecture with domain, data, and presen
 - **UI Components** (`presentation/ui/`): Stateless composables like `LoadingDialog`,
   `MainWebViewClient`
 - **Analytics** (`presentation/analytics/`): `MultiAnalyticsTracker` supporting Firebase, AppsFlyer,
-  Amplitude, and Meta (Facebook) tracking; `AnalyticsEvents` and `AnalyticsParams` define event names and parameter
+  Amplitude, and Meta (Facebook) tracking; `AnalyticsEvents` and `AnalyticsParams` define event
+  names and parameter
   constants
 
 ## Key Implementation Details
@@ -84,10 +85,10 @@ class MainViewModelFactory : ViewModelProvider.Factory {
 - **Error Tracking**: Sentry 8.29.0 (initialized in `SaltoInicialApp`)
 - **Logging**: Timber 5.0.1 (debug tree in development)
 - **Analytics**: Multi-provider tracking:
-  - Firebase Analytics 23.2.0
-  - AppsFlyer 6.18.0
-  - Amplitude 1.27.0
-  - **Meta (Facebook)**: App Events 17.0.0 for analytics, Audience Network 6.18.0 for ads
+    - Firebase Analytics 23.2.0
+    - AppsFlyer 6.18.0
+    - Amplitude 1.27.0
+    - **Meta (Facebook)**: App Events 17.0.0 for analytics, Audience Network 6.18.0 for ads
 - **Debug Tools**: LeakCanary 2.14 (debugImplementation only)
 - **Testing**: MockK 1.14.9, Turbine 1.2.1, kotlinx-coroutines-test 1.10.2
 
@@ -97,11 +98,11 @@ class MainViewModelFactory : ViewModelProvider.Factory {
 - **compileSdk**: 36 (Android 12)
 - **JVM Target**: 17
 - **ProGuard**: Enabled for release builds
-- **BuildConfig Fields**: 
-  - `APPSFLYER_DEV_KEY` (from `local.properties` or gradle properties)
-  - `AMPLITUDE_API_KEY` (from `local.properties` or gradle properties)
-  - `SENTRY_DSN` (from `local.properties` or gradle properties)
-  - `FACEBOOK_APP_ID` (from `local.properties` or gradle properties)
+- **BuildConfig Fields**:
+    - `APPSFLYER_DEV_KEY` (from `local.properties` or gradle properties)
+    - `AMPLITUDE_API_KEY` (from `local.properties` or gradle properties)
+    - `SENTRY_DSN` (from `local.properties` or gradle properties)
+    - `FACEBOOK_APP_ID` (from `local.properties` or gradle properties)
 - **Code Quality**: Detekt 1.23.8 configured with HTML, XML, TXT, and SARIF reports
 
 ## Development Workflow
@@ -109,14 +110,19 @@ class MainViewModelFactory : ViewModelProvider.Factory {
 ### Environment Configuration
 
 Required keys in `local.properties` or gradle properties:
+
 ```properties
 appsFlyerDevKey=YOUR_APPSFLYER_KEY
 amplitudeApiKey=YOUR_AMPLITUDE_KEY
 sentryDsn=YOUR_SENTRY_DSN
 facebookAppId=YOUR_FACEBOOK_APP_ID
+facebookClientToken=YOUR_FACEBOOK_CLIENT_TOKEN
+newRelicAppToken=YOUR_NEW_RELIC_APP_TOKEN
+mixpanelProjectToken=YOUR_MIXPANEL_PROJECT_TOKEN
 ```
 
 These are injected into `BuildConfig` at compile time and consumed by:
+
 - `SaltoInicialApp.onCreate()` for Sentry initialization
 - `MainActivity` for Analytics tracker initialization
 
