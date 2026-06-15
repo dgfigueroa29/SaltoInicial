@@ -1,6 +1,7 @@
 package com.boa.saltoinicial
 
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.content.res.Configuration
 import android.os.Bundle
 import android.os.StrictMode
@@ -9,6 +10,7 @@ import android.webkit.WebView
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -16,14 +18,19 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalInspectionMode
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.amplitude.core.Amplitude
 import com.appsflyer.AppsFlyerLib
@@ -61,6 +68,7 @@ class MainActivity : ComponentActivity() {
     private lateinit var analyticsTracker: MultiAnalyticsTracker
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
 
         // Permitir lectura de disco en el hilo principal para la inicialización de los SDK,
@@ -117,7 +125,7 @@ class MainActivity : ComponentActivity() {
         val appsFlyer = AppsFlyerLib.getInstance()
         if (appsFlyerDevKey.isNotBlank()) {
             appsFlyer.init(appsFlyerDevKey, null, applicationContext)
-            appsFlyer.start(this)
+            appsFlyer.start()
             Timber.i("AppsFlyer initialized")
         }
 
@@ -203,6 +211,16 @@ class MainActivity : ComponentActivity() {
 fun WebViewPage(viewModel: MainViewModel) {
     val uiState by viewModel.uiState.collectAsState()
 
+    val view = LocalView.current
+    if (!view.isInEditMode) {
+        SideEffect {
+            val window = (view.context as Activity).window
+            val insetsController = WindowCompat.getInsetsController(window, view)
+            insetsController.hide(WindowInsetsCompat.Type.statusBars() or WindowInsetsCompat.Type.navigationBars())
+            insetsController.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+        }
+    }
+
     // The Configuration object represents all the current configurations,
     // not just the ones that have changed.
     val configuration = LocalConfiguration.current
@@ -230,6 +248,7 @@ fun WebViewPage(viewModel: MainViewModel) {
         }
     } else {
         AndroidView(
+            modifier = Modifier.fillMaxSize(),
             factory = {
                 val oldPolicy = StrictMode.allowThreadDiskReads()
                 try {
@@ -241,8 +260,11 @@ fun WebViewPage(viewModel: MainViewModel) {
 
                         // Configure WebView settings
                         settings.javaScriptEnabled = true
+                        settings.domStorageEnabled = true
+                        settings.databaseEnabled = true
                         settings.userAgentString = System.getProperty("http.agent")
                         settings.useWideViewPort = true
+                        settings.loadWithOverviewMode = true
 
                         // Set custom WebViewClient
                         webViewClient = MainWebViewClient(viewModel)

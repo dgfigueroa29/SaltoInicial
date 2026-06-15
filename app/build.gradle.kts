@@ -17,9 +17,9 @@ val localProps = Properties().apply {
 }
 
 val facebookAppId = (project.findProperty("facebookAppId") as String?)
-    ?: localProps.getProperty("facebookAppId", "") ?: ""
+    ?: localProps.getProperty("facebookAppId", "").orEmpty()
 val facebookClientToken = (project.findProperty("facebookClientToken") as String?)
-    ?: localProps.getProperty("facebookClientToken", "") ?: ""
+    ?: localProps.getProperty("facebookClientToken", "").orEmpty()
 
 android {
     namespace = "com.boa.saltoinicial"
