@@ -3,8 +3,14 @@ package com.boa.saltoinicial.data.network
 import android.net.ConnectivityManager
 import android.net.Network
 import android.net.NetworkCapabilities
+import app.cash.turbine.test
+import io.mockk.Runs
 import io.mockk.every
+import io.mockk.just
 import io.mockk.mockk
+import io.mockk.slot
+import io.mockk.verify
+import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -73,5 +79,38 @@ class AndroidNetworkMonitorTest {
         every { manager.activeNetwork } throws SecurityException("missing permission")
 
         assertTrue(AndroidNetworkMonitor(manager).isOnline())
+    }
+
+    @Test
+    fun `observeOnline emits the current state and then every change`() = runTest {
+        val manager = mockk<ConnectivityManager>(relaxed = true)
+        val registered = slot<ConnectivityManager.NetworkCallback>()
+        every { manager.activeNetwork } returns null
+        every { manager.registerDefaultNetworkCallback(capture(registered)) } just Runs
+
+        AndroidNetworkMonitor(manager).observeOnline().test {
+            // Estado inicial: el suscriptor no tiene que consultarlo por separado.
+            assertFalse(awaitItem())
+
+            // Vuelve la red.
+            every { manager.activeNetwork } returns network
+            every {
+                manager.getNetworkCapabilities(network)
+            } returns capabilitiesWithInternet(hasInternet = true)
+            registered.captured.onAvailable(network)
+
+            assertTrue(awaitItem())
+            cancelAndIgnoreRemainingEvents()
+        }
+
+        verify { manager.unregisterNetworkCallback(registered.captured) }
+    }
+
+    @Test
+    fun `observeOnline reports online when ConnectivityManager is not available`() = runTest {
+        AndroidNetworkMonitor(connectivityManager = null).observeOnline().test {
+            assertTrue(awaitItem())
+            awaitComplete()
+        }
     }
 }

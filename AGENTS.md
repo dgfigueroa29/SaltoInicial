@@ -219,6 +219,9 @@ app/src/main/java/com/boa/
   failures and HTTP errors (including 500s) from the wrapped site are logged, never shown. See
   "Diálogo de sin conexión" in `CLAUDE.md` before touching `MainWebViewClient.onReceivedError` or
   `MainViewModel.onError`
+- **WebView lifecycle**: the WebView is hoisted with `remember` in `FullWebViewPage` and bound to
+  the lifecycle — paused, state-saved and destroyed. `setWebView(loadInitialUrl = false)` after a
+  `restoreState`, and `detachWebView()` on dispose. See "Ciclo de vida del WebView" in `CLAUDE.md`
 - **External links**: `shouldOverrideUrlLoading` keeps only the wrapped site inside the WebView
   (`IsInternalUrlUseCase`); other domains and non-http schemes go out through `Intent.ACTION_VIEW`
 - **Logging**: Timber is planted in `SaltoInicialApp.onCreate()` — `DebugTree` in debug,

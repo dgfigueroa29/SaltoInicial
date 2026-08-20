@@ -109,6 +109,8 @@ app/src/main/java/com/boa/
 6. `InfoDialog` se muestra **solo si el dispositivo está sin conexión**; durante la carga,
    `LoadingDialog`. Ver [Diálogo de sin conexión](#diálogo-de-sin-conexión).
 7. `BackHandler` gestiona la navegación hacia atrás dentro del WebView.
+8. `FullWebViewPage` ata el WebView al ciclo de vida: lo pausa y reanuda, guarda su historial y lo
+   destruye al salir. Ver [Ciclo de vida del WebView](#ciclo-de-vida-del-webview).
 
 ### Diálogo de sin conexión
 
@@ -134,6 +136,32 @@ declarado en el manifest.
 
 Al tocar el manejo de errores del WebView, mantener esa regla: **el popup es exclusivamente para
 falta de conexión del dispositivo.**
+
+### Ciclo de vida del WebView
+
+El `WebView` se crea una sola vez con `remember` dentro de `FullWebViewPage`, **no** en el `factory`
+del `AndroidView`: los efectos necesitan la referencia para manejarlo.
+
+- `ON_PAUSE` guarda el historial en el `Bundle` de `rememberSaveable` y llama a `onPause()` y
+  `pauseTimers()`. Sin eso, el audio o video embebido seguía sonando en segundo plano y los timers
+  de JavaScript seguían gastando batería.
+- `ON_RESUME` revierte ambas.
+- Al crearse, si el `Bundle` trae historial se llama a `restoreState` y **no** se carga la URL
+  inicial: pisaría la página donde estaba el usuario. Por eso `setWebView` recibe `loadInitialUrl`.
+- `onDispose` suelta la referencia del ViewModel con `detachWebView()` y `AndroidView.onRelease`
+  destruye la vista. El ViewModel sobrevive a la Activity, así que sin ese `detach` quedaba
+  reteniendo un WebView muerto.
+
+`WebView.saveState` guarda solo la pila de navegación, no el contenido de las páginas, así que el
+`Bundle` es chico y no hay riesgo de `TransactionTooLargeException`.
+
+### Reintento y vuelta de la conexión
+
+El diálogo de sin conexión tiene dos botones: **Reintentar** (`MainUiEvent.RetryLoad`, que lo cierra
+y recarga) y **OK**. Además, `MainViewModel` observa `IsDeviceOfflineUseCase.observe()` —sobre el
+`NetworkCallback` de `AndroidNetworkMonitor`— y recarga solo cuando la red vuelve **y** el diálogo
+está abierto. Si el usuario estaba leyendo con normalidad no se recarga nada: una recarga sorpresiva
+le haría perder la página.
 
 ### Enlaces externos
 

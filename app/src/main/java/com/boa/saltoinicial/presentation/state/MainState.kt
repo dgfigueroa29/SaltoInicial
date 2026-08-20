@@ -24,6 +24,7 @@ sealed class MainUiEvent {
     data object LoadWebsite : MainUiEvent()
     data object DismissErrorDialog : MainUiEvent()
     data object NavigateBack : MainUiEvent()
+    data object RetryLoad : MainUiEvent()
     data class ShowError(
         @param:StringRes val titleRes: Int,
         @param:StringRes val descriptionRes: Int

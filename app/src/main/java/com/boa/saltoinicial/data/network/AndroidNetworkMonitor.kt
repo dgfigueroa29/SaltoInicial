@@ -2,9 +2,14 @@ package com.boa.saltoinicial.data.network
 
 import android.content.Context
 import android.net.ConnectivityManager
+import android.net.Network
 import android.net.NetworkCapabilities
 import androidx.core.content.ContextCompat
 import com.boa.saltoinicial.domain.repository.NetworkMonitor
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import timber.log.Timber
 
 /**
@@ -54,4 +59,48 @@ class AndroidNetworkMonitor(
             true
         }
     }
+
+    /**
+     * Observa la red por defecto del sistema con un [ConnectivityManager.NetworkCallback].
+     *
+     * Emite el estado actual al suscribirse para que el consumidor no tenga que consultarlo por
+     * separado, y después uno por cada cambio. Si el registro del callback falla, deja de emitir en
+     * lugar de mentir sobre la conectividad: la consulta puntual de [isOnline] sigue disponible.
+     */
+    override fun observeOnline(): Flow<Boolean> = callbackFlow {
+        val manager = connectivityManager
+        if (manager == null) {
+            Timber.w("ConnectivityManager no disponible; no se observan cambios de red.")
+            send(true)
+            close()
+            return@callbackFlow
+        }
+
+        val callback = object : ConnectivityManager.NetworkCallback() {
+            override fun onAvailable(network: Network) = emitCurrentState()
+            override fun onLost(network: Network) = emitCurrentState()
+            override fun onCapabilitiesChanged(
+                network: Network,
+                networkCapabilities: NetworkCapabilities
+            ) = emitCurrentState()
+
+            private fun emitCurrentState() {
+                trySend(isOnline())
+            }
+        }
+
+        send(isOnline())
+        val registered = runCatching { manager.registerDefaultNetworkCallback(callback) }
+            .onFailure { error ->
+                Timber.w(error, "No se pudo observar la conectividad.")
+                close()
+            }
+            .isSuccess
+
+        awaitClose {
+            if (registered) {
+                runCatching { manager.unregisterNetworkCallback(callback) }
+            }
+        }
+    }.distinctUntilChanged()
 }

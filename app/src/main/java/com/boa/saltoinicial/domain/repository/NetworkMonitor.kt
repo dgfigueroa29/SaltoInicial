@@ -1,5 +1,7 @@
 package com.boa.saltoinicial.domain.repository
 
+import kotlinx.coroutines.flow.Flow
+
 /**
  * Contrato para consultar el estado de conectividad del dispositivo.
  *
@@ -16,4 +18,12 @@ interface NetworkMonitor {
      * dispositivo está sin red —por ejemplo, en modo avión—.
      */
     fun isOnline(): Boolean
+
+    /**
+     * Emite el estado de conectividad: el actual al suscribirse y uno nuevo en cada cambio.
+     *
+     * Permite recargar el sitio solo cuando la red vuelve, en lugar de dejar al usuario frente a
+     * un diálogo que no se actualiza hasta que reabre la app.
+     */
+    fun observeOnline(): Flow<Boolean>
 }
