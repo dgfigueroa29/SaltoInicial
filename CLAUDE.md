@@ -97,8 +97,8 @@ app/src/main/java/com/boa/
 2. `MainActivity.onCreate()` arranca New Relic (si hay token) y Firebase Analytics, y llama a
    `setupTracking()`, que inicializa AppsFlyer, Amplitude, Meta SDK + Audience Network y Mixpanel, y
    construye el `MultiAnalyticsTracker`.
-3. `WebViewPage` embebe un `WebView` vía `AndroidView` con JS y DOM storage habilitados, y le asigna
-   un `MainWebViewClient`.
+3. `WebViewPage` embebe un `WebView` vía `AndroidView` con JS y DOM storage habilitados, y le
+   asigna un `MainWebViewClient` y un `MainWebChromeClient`.
 4. `MainWebViewClient` delega `onPageStarted` / `onPageFinished` / `onReceivedError` al
    `MainViewModel`, que actualiza `MainUiState` y registra eventos de analítica. Los errores de
    subrecursos (imágenes, CSS, píxeles de tracking) y los errores HTTP del sitio no se delegan:
@@ -135,6 +135,24 @@ declarado en el manifest.
 Al tocar el manejo de errores del WebView, mantener esa regla: **el popup es exclusivamente para
 falta de conexión del dispositivo.**
 
+### Enlaces externos
+
+`MainWebViewClient.shouldOverrideUrlLoading` mantiene dentro del WebView **solo** lo que pertenece
+al sitio: `IsInternalUrlUseCase` acepta el host de `Common.WEB` y sus subdominios sobre `http(s)`.
+Todo lo demás —otro dominio, o esquemas como `mailto:`, `tel:` y `whatsapp:`— se deriva al sistema
+con `Intent.ACTION_VIEW`.
+
+Sin esto el WebView intentaba cargar cualquier esquema y terminaba en `ERR_UNKNOWN_URL_SCHEME`, así
+que los enlaces de contacto y de compartir no hacían nada.
+
+### Selector de archivos y diálogos de JavaScript
+
+`MainWebChromeClient` habilita `<input type="file">` y, por el solo hecho de existir, los
+`alert()` / `confirm()` / `prompt()` del sitio. El callback del WebView se responde exactamente una
+vez a través de `FileChooserBridge`; si no se responde, el input queda bloqueado para siempre.
+
+**No implementa `onShowCustomView`**: el video embebido todavía no puede ir a pantalla completa.
+
 ### Textos e idiomas
 
 El idioma por defecto es **español**: `res/values/strings.xml` es el fallback para cualquier locale
@@ -154,6 +172,12 @@ Al agregar un texto visible, cargarlo en `res/values/strings.xml` (español) **y
 
 - La inicialización de SDKs hace I/O en el hilo principal, así que va envuelta en
   `StrictMode.allowThreadDiskReads()` con restauración en `finally`.
+- **Timber se planta en `SaltoInicialApp.onCreate()` antes que cualquier otra cosa**: `DebugTree` en
+  debug y `CrashReportingTree` en release, que manda los `WARN` a Crashlytics como breadcrumbs y las
+  excepciones `ERROR` como no fatales. Sin plantar un árbol, Timber descarta todo en silencio.
+- `usesCleartextTraffic` está en `false` de forma explícita porque en API 24-27 el default del
+  sistema es `true`. Si algún recurso del sitio dejara de cargar, revisar primero si viaja por
+  `http`.
 - `WebViewRepositoryImpl` tiene métodos del contrato sin implementar (`goBack()`, `canGoBack()`,
   `hideElements()`) porque necesitan la instancia de `WebView`; los use cases castean a la
   implementación para usar las sobrecargas que la reciben por parámetro.

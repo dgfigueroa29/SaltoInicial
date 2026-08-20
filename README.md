@@ -1,5 +1,7 @@
 # SaltoInicial
 
+[![CI](https://github.com/dgfigueroa29/SaltoInicial/actions/workflows/ci.yml/badge.svg)](https://github.com/dgfigueroa29/SaltoInicial/actions/workflows/ci.yml)
+
 App Android que envuelve el sitio [saltoinicial.com.ar](https://www.saltoinicial.com.ar/) en un
 WebView nativo con Jetpack Compose.
 

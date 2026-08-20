@@ -219,6 +219,10 @@ app/src/main/java/com/boa/
   failures and HTTP errors (including 500s) from the wrapped site are logged, never shown. See
   "Diálogo de sin conexión" in `CLAUDE.md` before touching `MainWebViewClient.onReceivedError` or
   `MainViewModel.onError`
+- **External links**: `shouldOverrideUrlLoading` keeps only the wrapped site inside the WebView
+  (`IsInternalUrlUseCase`); other domains and non-http schemes go out through `Intent.ACTION_VIEW`
+- **Logging**: Timber is planted in `SaltoInicialApp.onCreate()` — `DebugTree` in debug,
+  `CrashReportingTree` in release. Never add a Timber call assuming it is planted elsewhere
 - **Localized copy**: dialog text lives in string resources — Spanish is the default
   (`res/values/strings.xml`), English is the translation (`res/values-en/strings.xml`).
   `MainUiState` carries `@StringRes` ids, never resolved `String`s, and analytics gets a stable
