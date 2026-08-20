@@ -230,8 +230,8 @@ class MainViewModelTest {
                 AnalyticsEvents.WEBVIEW_ERROR,
                 match { params ->
                     params[AnalyticsParams.URL] == "https://example.com" &&
-                        params[AnalyticsParams.ERROR_MESSAGE] == "net::ERR_FAILED" &&
-                        params[AnalyticsParams.IS_OFFLINE] == false
+                            params[AnalyticsParams.ERROR_MESSAGE] == "net::ERR_FAILED" &&
+                            params[AnalyticsParams.IS_OFFLINE] == false
                 }
             )
         }

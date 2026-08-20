@@ -51,11 +51,11 @@ datos de Google Play están documentados en [`docs/play-data-safety.md`](docs/pl
 
 ## Documentación
 
-| Documento | Contenido |
-|---|---|
-| [`AGENTS.md`](AGENTS.md) | Guía de arquitectura, convenciones y tareas comunes |
-| [`CLAUDE.md`](CLAUDE.md) | Guía para Claude Code |
-| [`docs/play-data-safety.md`](docs/play-data-safety.md) | Recolección de datos y declaración en Play Console |
+| Documento                                              | Contenido                                           |
+|--------------------------------------------------------|-----------------------------------------------------|
+| [`AGENTS.md`](AGENTS.md)                               | Guía de arquitectura, convenciones y tareas comunes |
+| [`CLAUDE.md`](CLAUDE.md)                               | Guía para Claude Code                               |
+| [`docs/play-data-safety.md`](docs/play-data-safety.md) | Recolección de datos y declaración en Play Console  |
 
 ## Licencia
 

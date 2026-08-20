@@ -11,8 +11,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -83,9 +83,9 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
 
-        // Permitir lectura de disco en el hilo principal para la inicialización de los SDK,
+        // Permitir E/S de disco en el hilo principal para la inicialización de los SDK,
         // que de lo contrario lanza una violación de StrictMode en debug.
-        val oldPolicy = StrictMode.allowThreadDiskReads()
+        val oldPolicy = StrictMode.allowThreadDiskWrites()
         val crashlytics = Firebase.crashlytics
         try {
             val newRelicToken = BuildConfig.NEW_RELIC_APP_TOKEN
@@ -248,7 +248,7 @@ private fun FullWebViewPage(viewModel: MainViewModel, chromeClient: MainWebChrom
     val savedState = rememberSaveable { Bundle() }
 
     val webView = remember {
-        val oldPolicy = StrictMode.allowThreadDiskReads()
+        val oldPolicy = StrictMode.allowThreadDiskWrites()
         try {
             WebView(context).apply {
                 layoutParams = ViewGroup.LayoutParams(
@@ -341,7 +341,8 @@ fun WebViewPage(viewModel: MainViewModel) {
             val window = (view.context as Activity).window
             val insetsController = WindowCompat.getInsetsController(window, view)
             insetsController.hide(WindowInsetsCompat.Type.statusBars() or WindowInsetsCompat.Type.navigationBars())
-            insetsController.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+            insetsController.systemBarsBehavior =
+                WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
         }
     }
 

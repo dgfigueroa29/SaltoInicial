@@ -58,10 +58,10 @@ ID. El GAID lo siguen usando Firebase Analytics y AppsFlyer, como antes.
 
 ### 4.1 Contenido de la app → ID de publicidad
 
-| Campo | Respuesta |
-|---|---|
-| ¿Tu app usa el ID de publicidad? | **Sí** |
-| Motivo de uso | **Analíticas** y **Publicidad o marketing** (atribución de instalaciones) |
+| Campo                            | Respuesta                                                                 |
+|----------------------------------|---------------------------------------------------------------------------|
+| ¿Tu app usa el ID de publicidad? | **Sí**                                                                    |
+| Motivo de uso                    | **Analíticas** y **Publicidad o marketing** (atribución de instalaciones) |
 
 Esta declaración es independiente de la de Seguridad de datos y también es obligatoria al targetear
 Android 13+. Si falta, Play bloquea la publicación por separado.
@@ -73,13 +73,13 @@ falten los otros tres. Conviene revisarlos todos en la misma pasada para no volv
 
 #### a) ID de dispositivo u otros ID — **el que motivó el reporte**
 
-| Pregunta del formulario | Respuesta |
-|---|---|
-| ¿Se recopilan estos datos? | **Sí** |
-| ¿Se comparten con terceros? | **Sí** (ver nota abajo) |
-| ¿Se procesan de forma efímera? | **No** |
-| ¿La recopilación es obligatoria? | **Obligatoria** — la app no ofrece opt-in ni opt-out |
-| Propósitos | Estadísticas · Publicidad o marketing · Funciones de la app · Prevención de fraudes, seguridad y cumplimiento |
+| Pregunta del formulario          | Respuesta                                                                                                     |
+|----------------------------------|---------------------------------------------------------------------------------------------------------------|
+| ¿Se recopilan estos datos?       | **Sí**                                                                                                        |
+| ¿Se comparten con terceros?      | **Sí** (ver nota abajo)                                                                                       |
+| ¿Se procesan de forma efímera?   | **No**                                                                                                        |
+| ¿La recopilación es obligatoria? | **Obligatoria** — la app no ofrece opt-in ni opt-out                                                          |
+| Propósitos                       | Estadísticas · Publicidad o marketing · Funciones de la app · Prevención de fraudes, seguridad y cumplimiento |
 
 Qué cae acá concretamente: GAID, Android ID (fallback de AppsFlyer), AppsFlyer ID, Firebase App
 Instance ID, Firebase Installation ID, distinct_id de Mixpanel, device ID de Amplitude, UUID de
@@ -93,30 +93,30 @@ New Relic e installation ID de Sentry.
 
 #### b) Información y rendimiento de la app → Registros de fallos
 
-| Pregunta | Respuesta |
-|---|---|
+| Pregunta       | Respuesta                                        |
+|----------------|--------------------------------------------------|
 | ¿Se recopilan? | **Sí** — Firebase Crashlytics, Sentry, New Relic |
-| ¿Se comparten? | **Sí** |
-| ¿Obligatoria? | **Obligatoria** |
-| Propósitos | Estadísticas · Funciones de la app |
+| ¿Se comparten? | **Sí**                                           |
+| ¿Obligatoria?  | **Obligatoria**                                  |
+| Propósitos     | Estadísticas · Funciones de la app               |
 
 #### c) Información y rendimiento de la app → Diagnósticos
 
-| Pregunta | Respuesta |
-|---|---|
+| Pregunta       | Respuesta                                                                              |
+|----------------|----------------------------------------------------------------------------------------|
 | ¿Se recopilan? | **Sí** — Firebase Performance Monitoring, New Relic, Sentry (`tracesSampleRate = 1.0`) |
-| ¿Se comparten? | **Sí** |
-| ¿Obligatoria? | **Obligatoria** |
-| Propósitos | Estadísticas · Funciones de la app |
+| ¿Se comparten? | **Sí**                                                                                 |
+| ¿Obligatoria?  | **Obligatoria**                                                                        |
+| Propósitos     | Estadísticas · Funciones de la app                                                     |
 
 #### d) Actividad en la app → Interacciones con la app
 
-| Pregunta | Respuesta |
-|---|---|
+| Pregunta       | Respuesta                                                                                                               |
+|----------------|-------------------------------------------------------------------------------------------------------------------------|
 | ¿Se recopilan? | **Sí** — eventos de `AnalyticsEvents` (`app_open`, `screen_view`, `webview_load_*`, `navigation_back`, `webview_error`) |
-| ¿Se comparten? | **Sí** |
-| ¿Obligatoria? | **Obligatoria** |
-| Propósitos | Estadísticas · Publicidad o marketing |
+| ¿Se comparten? | **Sí**                                                                                                                  |
+| ¿Obligatoria?  | **Obligatoria**                                                                                                         |
+| Propósitos     | Estadísticas · Publicidad o marketing                                                                                   |
 
 #### e) Ubicación → Ubicación aproximada — *evaluar*
 
@@ -133,18 +133,18 @@ conservadora y no tiene costo; sub-declarar es justamente lo que generó este re
 
 Fuente: `gradle/libs.versions.toml` y `app/build.gradle.kts`.
 
-| SDK | Dónde se inicializa | Identificadores que toca | Otros datos |
-|---|---|---|---|
-| Firebase Analytics | `MainActivity.onCreate()` | App Instance ID, **GAID** | Interacciones, ubicación aprox. por IP, info de dispositivo |
-| Firebase Crashlytics | Auto (plugin) + `MainActivity` | Crashlytics Installation UUID | Stack traces, estado del dispositivo |
-| Firebase Performance | `MainViewModel` (traces `webview_page_load`) | Installation ID, IP | Métricas de carga, atributo `url` |
-| AppsFlyer | `MainActivity.setupTracking()` | **GAID**, Android ID (fallback), AppsFlyer ID, IP | Eventos, referrer de instalación |
-| Install Referrer | Transitivo de AppsFlyer | — | Referrer de Play Store |
-| Meta SDK + Audience Network | `MainActivity.getFacebookLogger()` | Ad ID **desactivado** por manifest | App events manuales |
-| Amplitude | `MainActivity.setupTracking()` | Device ID (UUID) | Eventos (`offline = true`, `useBatch = true`) |
-| Mixpanel | `MainActivity.setupTracking()` | `distinct_id`, info de dispositivo | Eventos (`trackAutomaticEvents = false`) |
-| New Relic | `MainActivity.onCreate()` | UUID de dispositivo | Crashes, red, performance |
-| Sentry | `SaltoInicialApp.onCreate()` | Installation ID | Errores, breadcrumbs, sesiones, traces |
+| SDK                         | Dónde se inicializa                          | Identificadores que toca                          | Otros datos                                                 |
+|-----------------------------|----------------------------------------------|---------------------------------------------------|-------------------------------------------------------------|
+| Firebase Analytics          | `MainActivity.onCreate()`                    | App Instance ID, **GAID**                         | Interacciones, ubicación aprox. por IP, info de dispositivo |
+| Firebase Crashlytics        | Auto (plugin) + `MainActivity`               | Crashlytics Installation UUID                     | Stack traces, estado del dispositivo                        |
+| Firebase Performance        | `MainViewModel` (traces `webview_page_load`) | Installation ID, IP                               | Métricas de carga, atributo `url`                           |
+| AppsFlyer                   | `MainActivity.setupTracking()`               | **GAID**, Android ID (fallback), AppsFlyer ID, IP | Eventos, referrer de instalación                            |
+| Install Referrer            | Transitivo de AppsFlyer                      | —                                                 | Referrer de Play Store                                      |
+| Meta SDK + Audience Network | `MainActivity.getFacebookLogger()`           | Ad ID **desactivado** por manifest                | App events manuales                                         |
+| Amplitude                   | `MainActivity.setupTracking()`               | Device ID (UUID)                                  | Eventos (`offline = true`, `useBatch = true`)               |
+| Mixpanel                    | `MainActivity.setupTracking()`               | `distinct_id`, info de dispositivo                | Eventos (`trackAutomaticEvents = false`)                    |
+| New Relic                   | `MainActivity.onCreate()`                    | UUID de dispositivo                               | Crashes, red, performance                                   |
+| Sentry                      | `SaltoInicialApp.onCreate()`                 | Installation ID                                   | Errores, breadcrumbs, sesiones, traces                      |
 
 ---
 

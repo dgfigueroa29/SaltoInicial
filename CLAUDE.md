@@ -199,7 +199,7 @@ Al agregar un texto visible, cargarlo en `res/values/strings.xml` (español) **y
 ### Notas de implementación
 
 - La inicialización de SDKs hace I/O en el hilo principal, así que va envuelta en
-  `StrictMode.allowThreadDiskReads()` con restauración en `finally`.
+  `StrictMode.allowThreadDiskWrites()` con restauración en `finally`.
 - **Timber se planta en `SaltoInicialApp.onCreate()` antes que cualquier otra cosa**: `DebugTree` en
   debug y `CrashReportingTree` en release, que manda los `WARN` a Crashlytics como breadcrumbs y las
   excepciones `ERROR` como no fatales. Sin plantar un árbol, Timber descarta todo en silencio.

@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
+<?xml version="1.0" encoding="utf-8"?><!--
   Idioma por defecto de la app: español. Este archivo es el fallback para cualquier locale del
   dispositivo que no tenga su propia carpeta (values-en para inglés).
 -->

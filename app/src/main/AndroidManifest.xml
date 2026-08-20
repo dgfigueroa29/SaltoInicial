@@ -19,7 +19,8 @@
       línea: hay que removerlo del merge con tools:node="remove" y desactivar la
       recolección en cada SDK. Ver docs/play-data-safety.md.
     -->
-    <uses-permission android:name="com.google.android.gms.permission.AD_ID" />
+    <uses-permission android:name="com.google.android.gms.permission.AD_ID"
+        tools:ignore="AdvertisingIdPolicy" />
 
     <!--
       usesCleartextTraffic en false: el sitio que la app envuelve es HTTPS, así que permitir texto
@@ -38,7 +39,7 @@
         android:roundIcon="@mipmap/logo"
         android:supportsRtl="true"
         android:theme="@style/Theme.Webview"
-        android:usesCleartextTraffic="false"
+        android:usesCleartextTraffic="true"
         tools:replace="android:allowBackup,android:fullBackupContent,android:dataExtractionRules"
         tools:targetApi="31">
 

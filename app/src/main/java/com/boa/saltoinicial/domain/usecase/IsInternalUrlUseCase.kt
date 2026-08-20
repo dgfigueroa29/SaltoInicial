@@ -24,9 +24,9 @@ class IsInternalUrlUseCase(siteUrl: String = Common.WEB) {
         val host = parsed?.host?.lowercase()?.removePrefix("www.")
         val site = siteHost
         return site != null &&
-            host != null &&
-            (scheme == "http" || scheme == "https") &&
-            (host == site || host.endsWith(".$site"))
+                host != null &&
+                (scheme == "http" || scheme == "https") &&
+                (host == site || host.endsWith(".$site"))
     }
 
     private fun hostOf(url: String): String? =

@@ -262,7 +262,8 @@ app/src/main/java/com/boa/
 The app ships ten third-party SDKs for analytics, attribution and monitoring. Several of them read
 the Advertising ID (GAID) or generate persistent installation identifiers, and several inject
 `com.google.android.gms.permission.AD_ID` into the merged manifest on their own. Google Play checks
-this against the **Data safety** declaration in Play Console and rejects releases that under-declare.
+this against the **Data safety** declaration in Play Console and rejects releases that
+under-declare.
 
 **[`docs/play-data-safety.md`](docs/play-data-safety.md)** is the source of truth: it holds the
 per-SDK inventory of what is collected and the exact declaration to fill in Play Console.

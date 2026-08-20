@@ -45,8 +45,8 @@ class SaltoInicialApp : Application() {
         val dsn = BuildConfig.SENTRY_DSN
 
         if (dsn.isNotBlank()) {
-            // Sentry initialization may perform disk reads on the main thread
-            val oldPolicy = StrictMode.allowThreadDiskReads()
+            // Sentry initialization may perform disk I/O on the main thread
+            val oldPolicy = StrictMode.allowThreadDiskWrites()
             try {
                 SentryAndroid.init(this) { options ->
                     options.dsn = dsn

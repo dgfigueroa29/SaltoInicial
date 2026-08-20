@@ -52,7 +52,7 @@ class AndroidNetworkMonitor(
                 // Si el sistema no informa las capacidades no se puede afirmar que no haya red.
                 val capabilities = manager.getNetworkCapabilities(activeNetwork)
                 capabilities == null ||
-                    capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+                        capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
             }
         }.getOrElse { error ->
             Timber.w(error, "No se pudo consultar la conectividad; se asume que hay conexión.")
