@@ -20,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -151,7 +152,7 @@ private fun InfoDialogButton(onDismiss: () -> Unit) {
         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
     ) {
         Text(
-            text = "OK",
+            text = stringResource(R.string.ok),
             style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.onPrimary,
         )

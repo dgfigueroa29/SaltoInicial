@@ -12,14 +12,15 @@ Jetpack Compose. Now implements Clean Architecture with domain, data, and presen
 - **Models** (`domain/models/`): Core business models like `WebViewState`, `WebViewError`,
   `WebViewConfig`
 - **Repository Interfaces** (`domain/repository/`): `WebViewRepository` interface defining data
-  operations
+  operations; `NetworkMonitor` interface for device connectivity
 - **Use Cases** (`domain/usecase/`): Business logic classes like `LoadWebsiteUseCase`,
-  `NavigateBackUseCase`, `HideElementsUseCase`
+  `NavigateBackUseCase`, `HideElementsUseCase`, `IsDeviceOfflineUseCase`
 
 ### Data Layer (`data/`)
 
 - **Repository Implementations** (`data/repository/`): `WebViewRepositoryImpl` containing actual
   WebView operations and state management
+- **Connectivity** (`data/network/`): `AndroidNetworkMonitor` backed by `ConnectivityManager`
 
 ### Presentation Layer (`presentation/`)
 
@@ -44,9 +45,10 @@ class WebViewRepositoryImpl(private var webView: WebView? = null) : WebViewRepos
 
 // ViewModel orchestrates business logic
 class MainViewModel(
-    private val repository: WebViewRepository,
     private val loadWebsiteUseCase: LoadWebsiteUseCase,
     // ... other use cases
+    private val isDeviceOfflineUseCase: IsDeviceOfflineUseCase,
+    private val analyticsTracker: AnalyticsTracker
 ) : ViewModel()
 
 
@@ -77,21 +79,21 @@ class MainViewModelFactory : ViewModelProvider.Factory {
 ### Version Management
 
 - **Version Catalogs**: `gradle/libs.versions.toml` for all dependencies
-- **AGP**: `9.2.1` / **Kotlin**: `2.4.0`
-- **Compose BOM**: `2026.05.01` for UI components
-- **Firebase BOM**: `34.14.1` for Analytics/Crashlytics/Performance
+- **AGP**: `9.3.1` / **Kotlin**: `2.4.0`
+- **Compose BOM**: `2026.08.00` for UI components
+- **Firebase BOM**: `34.18.0` for Analytics/Crashlytics/Performance
 
 ### Key Dependencies
 
-- **Error Tracking**: Sentry 8.43.2 (initialized in `SaltoInicialApp`), New Relic 7.7.6 (initialized
+- **Error Tracking**: Sentry 8.53.0 (initialized in `SaltoInicialApp`), New Relic 7.8.1 (initialized
   in `MainActivity`)
 - **Logging**: Timber 5.0.1 (debug tree in development)
 - **Analytics**: Multi-provider tracking:
-    - Firebase Analytics 23.2.0, Crashlytics 20.0.6, Performance Monitoring (from BOM)
-    - AppsFlyer 7.0.0 + Install Referrer 2.2
-    - Amplitude 1.29.0
-    - Mixpanel 8.8.0
-    - **Meta (Facebook)**: SDK 18.2.3 for App Events, Audience Network 6.21.0 for ads
+    - Firebase Analytics 23.2.0, Crashlytics 20.1.0, Performance Monitoring (from BOM)
+    - AppsFlyer 7.0.1 + Install Referrer 2.2
+    - Amplitude 1.30.1
+    - Mixpanel 8.9.0
+    - **Meta (Facebook)**: SDK 18.3.0 for App Events, Audience Network 6.22.0 for ads
 - **Debug Tools**: LeakCanary 2.14 (debugImplementation only)
 - **Testing**: MockK 1.14.11, Turbine 1.2.1, kotlinx-coroutines-test 1.11.0
 
@@ -177,8 +179,11 @@ app/src/main/java/com/boa/
 │   ├── domain/
 │   │   ├── models/WebViewModels.kt             # Domain entities
 │   │   ├── repository/WebViewRepository.kt     # Repository contracts
-│   │   └── usecase/WebViewUseCases.kt          # Business logic
+│   │   ├── repository/NetworkMonitor.kt        # Connectivity contract
+│   │   ├── usecase/WebViewUseCases.kt          # Business logic
+│   │   └── usecase/IsDeviceOfflineUseCase.kt   # Gates the offline dialog
 │   ├── data/
+│   │   ├── network/AndroidNetworkMonitor.kt    # ConnectivityManager
 │   │   └── repository/WebViewRepositoryImpl.kt # Data implementations
 │   ├── presentation/
 │   │   ├── analytics/
@@ -189,7 +194,7 @@ app/src/main/java/com/boa/
 │   │   └── ui/                                 # UI components
 │   │       ├── LoadingDialog.kt
 │   │       ├── MainWebViewClient.kt
-│   │       └── InfoDialog.kt
+│   │       └── InfoDialog.kt              # Only shown when the device is offline
 │   ├── MainActivity.kt                         # App entry point
 │   ├── SaltoInicialApp.kt                      # Application class: Sentry + StrictMode init
 │   └── ui/theme/                               # Material3 theming
@@ -210,6 +215,14 @@ app/src/main/java/com/boa/
 - **WebView Errors**: Converted to domain `WebViewError` types
 - **UI State**: Error dialogs managed through immutable state
 - **Crashlytics**: Exception logging in `MainActivity.onCreate()`
+- **Offline dialog**: `InfoDialog` means one thing only — the device has no connection. Subresource
+  failures and HTTP errors (including 500s) from the wrapped site are logged, never shown. See
+  "Diálogo de sin conexión" in `CLAUDE.md` before touching `MainWebViewClient.onReceivedError` or
+  `MainViewModel.onError`
+- **Localized copy**: dialog text lives in string resources — Spanish is the default
+  (`res/values/strings.xml`), English is the translation (`res/values-en/strings.xml`).
+  `MainUiState` carries `@StringRes` ids, never resolved `String`s, and analytics gets a stable
+  `error_type` instead of translated copy. Add every new user-facing string to both files
 
 ## Common Tasks
 

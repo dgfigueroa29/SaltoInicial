@@ -1,7 +1,13 @@
-<resources>
-    <string name="app_name">Salto Inicial</string>
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Idioma por defecto de la app: español. Este archivo es el fallback para cualquier locale del
+  dispositivo que no tenga su propia carpeta (values-en para inglés).
+-->
+<resources xmlns:tools="http://schemas.android.com/tools" tools:locale="es">
+    <string name="app_name" translatable="false">Salto Inicial</string>
     <string name="loading">Cargando…</string>
     <string name="please_wait">Por favor espera…</string>
     <string name="offline">¿Sin conexión?</string>
     <string name="offline_desc">Reinicia tu conexión o tu app para continuar\n</string>
+    <string name="ok">OK</string>
 </resources>

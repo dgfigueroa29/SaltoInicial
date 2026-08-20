@@ -12,10 +12,15 @@ data class WebViewState(
 
 /**
  * Represents different types of WebView errors
+ *
+ * @property description Motivo real informado por el WebView. Es el texto que se registra en
+ * analítica; el diálogo de "sin conexión" usa un mensaje propio.
  */
 sealed class WebViewError {
-    data class NetworkError(val description: String) : WebViewError()
-    data class GenericError(val description: String) : WebViewError()
+    abstract val description: String
+
+    data class NetworkError(override val description: String) : WebViewError()
+    data class GenericError(override val description: String) : WebViewError()
 }
 
 /**

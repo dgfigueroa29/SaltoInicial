@@ -76,8 +76,11 @@ app/src/main/java/com/boa/
 │   ├── domain/
 │   │   ├── models/WebViewModels.kt           # WebViewState, WebViewError, WebViewConfig
 │   │   ├── repository/WebViewRepository.kt   # Contrato
-│   │   └── usecase/WebViewUseCases.kt        # LoadWebsite, NavigateBack, HideElements, HandleError
+│   │   ├── repository/NetworkMonitor.kt      # Contrato de conectividad
+│   │   ├── usecase/WebViewUseCases.kt        # LoadWebsite, NavigateBack, HideElements, HandleError
+│   │   └── usecase/IsDeviceOfflineUseCase.kt # Única condición que habilita el diálogo de error
 │   ├── data/
+│   │   ├── network/AndroidNetworkMonitor.kt  # ConnectivityManager
 │   │   └── repository/WebViewRepositoryImpl.kt
 │   ├── presentation/
 │   │   ├── analytics/AnalyticsTracker.kt     # Contrato + MultiAnalyticsTracker + eventos/params
@@ -97,12 +100,55 @@ app/src/main/java/com/boa/
 3. `WebViewPage` embebe un `WebView` vía `AndroidView` con JS y DOM storage habilitados, y le asigna
    un `MainWebViewClient`.
 4. `MainWebViewClient` delega `onPageStarted` / `onPageFinished` / `onReceivedError` al
-   `MainViewModel`, que actualiza `MainUiState` y registra eventos de analítica.
+   `MainViewModel`, que actualiza `MainUiState` y registra eventos de analítica. Los errores de
+   subrecursos (imágenes, CSS, píxeles de tracking) y los errores HTTP del sitio no se delegan:
+   solo se loguean con Timber.
 5. `onPageStarted` abre un trace de Firebase Performance (`webview_page_load`); `onPageFinished` lo
    cierra y ejecuta `HideElementsUseCase`, que inyecta JavaScript para ocultar la paginación
    (`#blog-pager`) y los primeros siete elementos `.btn` del blog.
-6. En error de red se muestra `InfoDialog`; durante la carga, `LoadingDialog`.
+6. `InfoDialog` se muestra **solo si el dispositivo está sin conexión**; durante la carga,
+   `LoadingDialog`. Ver [Diálogo de sin conexión](#diálogo-de-sin-conexión).
 7. `BackHandler` gestiona la navegación hacia atrás dentro del WebView.
+
+### Diálogo de sin conexión
+
+`InfoDialog` comunica una sola cosa: **el dispositivo no tiene conexión** (sin red o en modo avión).
+El sitio que envuelve la app genera errores propios —HTTP 5xx, recursos rotos, JavaScript con
+errores, hosts de terceros caídos— y ninguno de esos debe tapar la pantalla con ese diálogo.
+
+Tres filtros, en orden, garantizan eso:
+
+1. `MainWebViewClient.onReceivedError` descarta los fallos que no son del documento principal
+   (`WebResourceRequest.isForMainFrame`). El callback se dispara por **cada** recurso que falla, y
+   esa era la causa principal del popup espurio.
+2. `MainWebViewClient.onReceivedHttpError` nunca llega al ViewModel: un 500 significa que hay
+   conexión. Se sobrescribe solo para loguearlo y dejar la decisión asentada.
+3. `MainViewModel.onError` consulta `IsDeviceOfflineUseCase` (sobre `AndroidNetworkMonitor` /
+   `ConnectivityManager`) y muestra el diálogo únicamente si el dispositivo está sin red. Si hay
+   conexión, loguea, registra el error en analítica con `is_offline = false` y apaga el loading.
+
+`AndroidNetworkMonitor` falla hacia "online" ante cualquier duda (servicio no disponible, excepción,
+capacidades desconocidas) y a propósito no exige `NET_CAPABILITY_VALIDATED`: un falso "sin conexión"
+sobre un sitio que carga bien es peor que omitir el diálogo. Requiere `ACCESS_NETWORK_STATE`, ya
+declarado en el manifest.
+
+Al tocar el manejo de errores del WebView, mantener esa regla: **el popup es exclusivamente para
+falta de conexión del dispositivo.**
+
+### Textos e idiomas
+
+El idioma por defecto es **español**: `res/values/strings.xml` es el fallback para cualquier locale
+del dispositivo, y `res/values-en/strings.xml` traduce al inglés. Un dispositivo en inglés ve la
+traducción; cualquier otro idioma cae en español.
+
+Los textos de los diálogos no viven en el ViewModel: `MainUiState` guarda **IDs de recurso**
+(`errorTitleRes`, `errorDescriptionRes`) y el Composable los resuelve con `stringResource`. Así el
+ViewModel no necesita `Context` y el texto acompaña al idioma del dispositivo aun si cambia con la
+app abierta. Por el mismo motivo a analítica se envía un identificador estable (`error_type` =
+`offline`), nunca el título traducido: mandarlo fragmentaría los datos por idioma.
+
+Al agregar un texto visible, cargarlo en `res/values/strings.xml` (español) **y** en
+`res/values-en/strings.xml` (inglés).
 
 ### Notas de implementación
 
@@ -114,12 +160,12 @@ app/src/main/java/com/boa/
 
 ## Dependencias principales
 
-- **AGP 9.2.1** / **Kotlin 2.4.0** / **compileSdk 37** / **minSdk 24** / **targetSdk 37** / **JVM 17**
-- **Firebase BOM 34.14.1**: Analytics, Crashlytics, Performance Monitoring
-- **Compose BOM 2026.05.01**: UI, Material3
-- **Analítica y atribución**: AppsFlyer 7.0.0 (+ Install Referrer 2.2), Amplitude 1.29.0,
-  Mixpanel 8.8.0, Meta SDK 18.2.3 + Audience Network 6.21.0
-- **Monitoreo**: Sentry 8.43.2, New Relic 7.7.6
+- **AGP 9.3.1** / **Kotlin 2.4.0** / **compileSdk 37** / **minSdk 24** / **targetSdk 37** / **JVM 17**
+- **Firebase BOM 34.18.0**: Analytics, Crashlytics, Performance Monitoring
+- **Compose BOM 2026.08.00**: UI, Material3
+- **Analítica y atribución**: AppsFlyer 7.0.1 (+ Install Referrer 2.2), Amplitude 1.30.1,
+  Mixpanel 8.9.0, Meta SDK 18.3.0 + Audience Network 6.22.0
+- **Monitoreo**: Sentry 8.53.0, New Relic 7.8.1
 - **Logging**: Timber 5.0.1
 - **Calidad**: Detekt 1.23.8
 - **Debug**: LeakCanary 2.14

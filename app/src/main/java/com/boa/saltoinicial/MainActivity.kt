@@ -26,6 +26,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.view.WindowCompat
@@ -34,6 +35,7 @@ import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.amplitude.core.Amplitude
 import com.appsflyer.AppsFlyerLib
+import com.boa.saltoinicial.data.network.AndroidNetworkMonitor
 import com.boa.saltoinicial.presentation.analytics.AnalyticsEvents
 import com.boa.saltoinicial.presentation.analytics.AnalyticsParams
 import com.boa.saltoinicial.presentation.analytics.MultiAnalyticsTracker
@@ -100,7 +102,8 @@ class MainActivity : ComponentActivity() {
                     ) {
                         val viewModel: MainViewModel = viewModel(
                             factory = MainViewModelFactory(
-                                analyticsTracker = analyticsTracker
+                                analyticsTracker = analyticsTracker,
+                                networkMonitor = AndroidNetworkMonitor(applicationContext)
                             )
                         )
                         WebViewPage(viewModel = viewModel)
@@ -236,48 +239,53 @@ fun WebViewPage(viewModel: MainViewModel) {
 
     // Adding a WebView inside AndroidView
     // with layout as full screen
-    if (LocalInspectionMode.current) {
-        // Show a placeholder in the preview to avoid the WebView rendering issue
-        // WebView is not fully supported in LayoutLib (Compose Preview)
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            Text(text = "WebView Placeholder", color = MaterialTheme.colorScheme.primary)
-        }
-    } else {
-        AndroidView(
-            modifier = Modifier.fillMaxSize(),
-            factory = {
-                val oldPolicy = StrictMode.allowThreadDiskReads()
-                try {
-                    WebView(it).apply {
-                        layoutParams = ViewGroup.LayoutParams(
-                            ViewGroup.LayoutParams.MATCH_PARENT,
-                            ViewGroup.LayoutParams.MATCH_PARENT
-                        )
-
-                        // Configure WebView settings
-                        settings.javaScriptEnabled = true
-                        settings.domStorageEnabled = true
-                        settings.databaseEnabled = true
-                        settings.userAgentString = System.getProperty("http.agent")
-                        settings.useWideViewPort = true
-                        settings.loadWithOverviewMode = true
-
-                        // Set custom WebViewClient
-                        webViewClient = MainWebViewClient(viewModel)
-
-                        // Set WebView in ViewModel
-                        viewModel.setWebView(this)
-                    }
-                } finally {
-                    StrictMode.setThreadPolicy(oldPolicy)
-                }
+    @Composable
+    fun FullWebViewPage() {
+        if (LocalInspectionMode.current) {
+            // Show a placeholder in the preview to avoid the WebView rendering issue
+            // WebView is not fully supported in LayoutLib (Compose Preview)
+            Column(
+                modifier = Modifier.fillMaxSize(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Text(text = "WebView Placeholder", color = MaterialTheme.colorScheme.primary)
             }
-        )
+        } else {
+            AndroidView(
+                modifier = Modifier.fillMaxSize(),
+                factory = {
+                    val oldPolicy = StrictMode.allowThreadDiskReads()
+                    try {
+                        WebView(it).apply {
+                            layoutParams = ViewGroup.LayoutParams(
+                                ViewGroup.LayoutParams.MATCH_PARENT,
+                                ViewGroup.LayoutParams.MATCH_PARENT
+                            )
+
+                            // Configure WebView settings
+                            settings.javaScriptEnabled = true
+                            settings.domStorageEnabled = true
+                            settings.databaseEnabled = true
+                            settings.userAgentString = System.getProperty("http.agent")
+                            settings.useWideViewPort = true
+                            settings.loadWithOverviewMode = true
+
+                            // Set custom WebViewClient
+                            webViewClient = MainWebViewClient(viewModel)
+
+                            // Set WebView in ViewModel
+                            viewModel.setWebView(this)
+                        }
+                    } finally {
+                        StrictMode.setThreadPolicy(oldPolicy)
+                    }
+                }
+            )
+        }
     }
+
+    FullWebViewPage()
 
     // Show loading dialog
     if (uiState.isLoading) {
@@ -289,8 +297,8 @@ fun WebViewPage(viewModel: MainViewModel) {
     // Show error dialog
     if (uiState.showErrorDialog) {
         InfoDialog(
-            title = uiState.errorTitle,
-            desc = uiState.errorDescription,
+            title = uiState.errorTitleRes?.let { stringResource(it) },
+            desc = uiState.errorDescriptionRes?.let { stringResource(it) },
             onDismiss = {
                 viewModel.onEvent(MainUiEvent.DismissErrorDialog)
             }
