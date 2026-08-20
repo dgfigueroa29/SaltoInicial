@@ -30,9 +30,9 @@ Jetpack Compose. Now implements Clean Architecture with domain, data, and presen
 - **UI Components** (`presentation/ui/`): Stateless composables like `LoadingDialog`,
   `MainWebViewClient`
 - **Analytics** (`presentation/analytics/`): `MultiAnalyticsTracker` supporting Firebase, AppsFlyer,
-  Amplitude, and Meta (Facebook) tracking; `AnalyticsEvents` and `AnalyticsParams` define event
-  names and parameter
-  constants
+  Amplitude, Meta (Facebook) and Mixpanel tracking; `AnalyticsEvents` and `AnalyticsParams` define
+  event names and parameter constants. Providers whose key is missing are passed as `null` and
+  skipped
 
 ## Key Implementation Details
 
@@ -77,39 +77,50 @@ class MainViewModelFactory : ViewModelProvider.Factory {
 ### Version Management
 
 - **Version Catalogs**: `gradle/libs.versions.toml` for all dependencies
-- **Compose BOM**: `2026.02.01` for UI components
-- **Firebase BOM**: `34.10.0` for Crashlytics/Analytics
+- **AGP**: `9.2.1` / **Kotlin**: `2.4.0`
+- **Compose BOM**: `2026.05.01` for UI components
+- **Firebase BOM**: `34.14.1` for Analytics/Crashlytics/Performance
 
 ### Key Dependencies
 
-- **Error Tracking**: Sentry 8.29.0 (initialized in `SaltoInicialApp`)
+- **Error Tracking**: Sentry 8.43.2 (initialized in `SaltoInicialApp`), New Relic 7.7.6 (initialized
+  in `MainActivity`)
 - **Logging**: Timber 5.0.1 (debug tree in development)
 - **Analytics**: Multi-provider tracking:
-    - Firebase Analytics 23.2.0
-    - AppsFlyer 6.18.0
-    - Amplitude 1.27.0
-    - **Meta (Facebook)**: App Events 17.0.0 for analytics, Audience Network 6.18.0 for ads
+    - Firebase Analytics 23.2.0, Crashlytics 20.0.6, Performance Monitoring (from BOM)
+    - AppsFlyer 7.0.0 + Install Referrer 2.2
+    - Amplitude 1.29.0
+    - Mixpanel 8.8.0
+    - **Meta (Facebook)**: SDK 18.2.3 for App Events, Audience Network 6.21.0 for ads
 - **Debug Tools**: LeakCanary 2.14 (debugImplementation only)
-- **Testing**: MockK 1.14.9, Turbine 1.2.1, kotlinx-coroutines-test 1.10.2
+- **Testing**: MockK 1.14.11, Turbine 1.2.1, kotlinx-coroutines-test 1.11.0
 
 ### Build Configuration
 
-- **minSdk**: 23 (Android 6.0)
-- **compileSdk**: 36 (Android 12)
+- **minSdk**: 24 (Android 7.0)
+- **compileSdk** / **targetSdk**: 37
+- **versionCode / versionName**: 6 / `1.6`
 - **JVM Target**: 17
-- **ProGuard**: Enabled for release builds
-- **BuildConfig Fields**:
-    - `APPSFLYER_DEV_KEY` (from `local.properties` or gradle properties)
-    - `AMPLITUDE_API_KEY` (from `local.properties` or gradle properties)
-    - `SENTRY_DSN` (from `local.properties` or gradle properties)
-    - `FACEBOOK_APP_ID` (from `local.properties` or gradle properties)
-- **Code Quality**: Detekt 1.23.8 configured with HTML, XML, TXT, and SARIF reports
+- **R8**: `isMinifyEnabled` + `isShrinkResources` enabled for release builds
+- **BuildConfig Fields** (all from `local.properties` or gradle properties):
+    - `APPSFLYER_DEV_KEY`
+    - `AMPLITUDE_API_KEY`
+    - `SENTRY_DSN`
+    - `NEW_RELIC_APP_TOKEN`
+    - `MIXPANEL_PROJECT_TOKEN`
+    - `FACEBOOK_APP_ID`, `FACEBOOK_CLIENT_TOKEN` (also injected as `manifestPlaceholders`)
+- **Code Quality**: Detekt 1.23.8 (`config/detekt/detekt.yml`, `autoCorrect` on) with HTML, XML,
+  TXT, and SARIF reports
 
 ## Development Workflow
 
 ### Environment Configuration
 
-Required keys in `local.properties` or gradle properties:
+> **This is a public repository.** Never commit API keys, tokens, DSNs or keystores. `.gitignore`
+> excludes `local.properties`; keep it that way and use placeholder values in any documentation or
+> example you write.
+
+Keys go in `local.properties` or gradle properties (`-PappsFlyerDevKey=...`):
 
 ```properties
 appsFlyerDevKey=YOUR_APPSFLYER_KEY
@@ -124,7 +135,14 @@ mixpanelProjectToken=YOUR_MIXPANEL_PROJECT_TOKEN
 These are injected into `BuildConfig` at compile time and consumed by:
 
 - `SaltoInicialApp.onCreate()` for Sentry initialization
-- `MainActivity` for Analytics tracker initialization
+- `MainActivity` for New Relic and Analytics tracker initialization
+
+Every key is optional at build time: a blank value means the corresponding SDK is skipped and a
+Timber warning is logged. The app compiles and runs with none of them set.
+
+`app/google-services.json` **is** versioned. The Firebase API key it contains is not a secret — it
+is extractable from any APK — and real protection comes from Firebase Security Rules and App Check,
+not from hiding the file.
 
 ### Testing Commands
 
@@ -154,26 +172,28 @@ These are injected into `BuildConfig` at compile time and consumed by:
 ### File Structure
 
 ```
-app/src/main/java/com/boa/saltoinicial/
-├── domain/
-│   ├── models/WebViewModels.kt             # Domain entities
-│   ├── repository/WebViewRepository.kt     # Repository contracts
-│   └── usecase/WebViewUseCases.kt          # Business logic
-├── data/
-│   └── repository/WebViewRepositoryImpl.kt # Data implementations
-├── presentation/
-│   ├── analytics/
-│   │   └── AnalyticsTracker.kt            # Multi-provider analytics (Firebase, AppsFlyer, Amplitude, Meta)
-│   ├── viewmodel/MainViewModel.kt          # State management
-│   ├── viewmodel/MainViewModelFactory.kt   # DI factory
-│   ├── state/MainState.kt                  # UI state/events
-│   └── ui/                                # UI components
-│       ├── LoadingDiaTimber.kt
-│       ├── MainWebViewClient.kt
-│       └── InfoDiaTimber.kt
-├── MainActivity.kt                         # App entry point
-├── SaltoInicialApp.kt                     # Application class with Sentry, Timber, StrictMode init
-└── ui/theme/                               # Material3 theming
+app/src/main/java/com/boa/
+├── saltoinicial/
+│   ├── domain/
+│   │   ├── models/WebViewModels.kt             # Domain entities
+│   │   ├── repository/WebViewRepository.kt     # Repository contracts
+│   │   └── usecase/WebViewUseCases.kt          # Business logic
+│   ├── data/
+│   │   └── repository/WebViewRepositoryImpl.kt # Data implementations
+│   ├── presentation/
+│   │   ├── analytics/
+│   │   │   └── AnalyticsTracker.kt             # Multi-provider analytics
+│   │   ├── viewmodel/MainViewModel.kt          # State management
+│   │   ├── viewmodel/MainViewModelFactory.kt   # DI factory
+│   │   ├── state/MainState.kt                  # UI state/events
+│   │   └── ui/                                 # UI components
+│   │       ├── LoadingDialog.kt
+│   │       ├── MainWebViewClient.kt
+│   │       └── InfoDialog.kt
+│   ├── MainActivity.kt                         # App entry point
+│   ├── SaltoInicialApp.kt                      # Application class: Sentry + StrictMode init
+│   └── ui/theme/                               # Material3 theming
+└── utils/Common.kt                             # Site URL (WEB) and permissions
 ```
 
 ### Naming Patterns
@@ -214,3 +234,29 @@ app/src/main/java/com/boa/saltoinicial/
 1. Add to `gradle/libs.versions.toml` with version reference
 2. Use alias in `app/build.gradle.kts` dependencies block
 3. Follow existing Firebase/Compose BOM patterns
+4. If the dependency is a third-party SDK that collects user data, update
+   `docs/play-data-safety.md` and review the Play Console declaration — see below
+
+## Privacy & Play Data Safety
+
+The app ships ten third-party SDKs for analytics, attribution and monitoring. Several of them read
+the Advertising ID (GAID) or generate persistent installation identifiers, and several inject
+`com.google.android.gms.permission.AD_ID` into the merged manifest on their own. Google Play checks
+this against the **Data safety** declaration in Play Console and rejects releases that under-declare.
+
+**[`docs/play-data-safety.md`](docs/play-data-safety.md)** is the source of truth: it holds the
+per-SDK inventory of what is collected and the exact declaration to fill in Play Console.
+
+Rules when working in this repo:
+
+- **Adding, removing or reconfiguring any third-party SDK means updating
+  `docs/play-data-safety.md` and reviewing the Play Console declaration before publishing.** The gap
+  between what the app does and what the form declares is exactly what Play penalizes.
+- `com.google.android.gms.permission.AD_ID` is declared on purpose in
+  `app/src/main/AndroidManifest.xml`. Do not remove it without reading that document first — and
+  note that deleting the line alone would not stop collection, since `firebase-analytics` and
+  AppsFlyer re-inject it through manifest merge.
+- Valid Meta SDK manifest meta-data keys are the `FacebookSdk` constants only: `AutoInitEnabled`,
+  `AutoLogAppEventsEnabled`, `AdvertiserIDCollectionEnabled`, `CodelessDebugLogEnabled`,
+  `MonitorEnabled`. Anything else is a silent no-op — the manifest previously carried a misspelled
+  `AdvertisingIdCollectionEnabled` that did nothing while appearing to enable ad ID collection.
