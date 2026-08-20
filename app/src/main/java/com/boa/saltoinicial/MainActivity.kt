@@ -6,10 +6,13 @@ import android.content.res.Configuration
 import android.os.Bundle
 import android.os.StrictMode
 import android.view.ViewGroup
+import android.webkit.WebChromeClient
 import android.webkit.WebView
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -21,6 +24,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
@@ -40,8 +44,10 @@ import com.boa.saltoinicial.presentation.analytics.AnalyticsEvents
 import com.boa.saltoinicial.presentation.analytics.AnalyticsParams
 import com.boa.saltoinicial.presentation.analytics.MultiAnalyticsTracker
 import com.boa.saltoinicial.presentation.state.MainUiEvent
+import com.boa.saltoinicial.presentation.ui.FileChooserBridge
 import com.boa.saltoinicial.presentation.ui.InfoDialog
 import com.boa.saltoinicial.presentation.ui.LoadingDialog
+import com.boa.saltoinicial.presentation.ui.MainWebChromeClient
 import com.boa.saltoinicial.presentation.ui.MainWebViewClient
 import com.boa.saltoinicial.presentation.viewmodel.MainViewModel
 import com.boa.saltoinicial.presentation.viewmodel.MainViewModelFactory
@@ -214,6 +220,22 @@ class MainActivity : ComponentActivity() {
 fun WebViewPage(viewModel: MainViewModel) {
     val uiState by viewModel.uiState.collectAsState()
 
+    // Selector de archivos para los <input type="file"> del sitio. El puente rompe el ciclo entre
+    // el WebChromeClient, que lanza el selector, y el launcher, que recibe el resultado.
+    val fileChooser = remember { FileChooserBridge() }
+    val fileChooserLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        fileChooser.resolve(
+            WebChromeClient.FileChooserParams.parseResult(result.resultCode, result.data)
+        )
+    }
+    val chromeClient = remember(fileChooserLauncher) {
+        MainWebChromeClient(fileChooser) { intent ->
+            runCatching { fileChooserLauncher.launch(intent) }.isSuccess
+        }
+    }
+
     val view = LocalView.current
     if (!view.isInEditMode) {
         SideEffect {
@@ -273,6 +295,7 @@ fun WebViewPage(viewModel: MainViewModel) {
 
                             // Set custom WebViewClient
                             webViewClient = MainWebViewClient(viewModel)
+                            webChromeClient = chromeClient
 
                             // Set WebView in ViewModel
                             viewModel.setWebView(this)
