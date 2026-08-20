@@ -22,7 +22,10 @@ import io.mockk.mockkStatic
 import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
@@ -75,6 +78,8 @@ class MainViewModelTest {
         every { mockHideElementsUseCase(any()) } returns Unit
         // Por defecto el dispositivo tiene conexión: el diálogo de offline no debe aparecer.
         every { mockIsDeviceOfflineUseCase() } returns false
+        // Sin cambios de conectividad salvo que el test diga lo contrario.
+        every { mockIsDeviceOfflineUseCase.observe() } returns flowOf()
 
         viewModel = MainViewModel(
             loadWebsiteUseCase = mockLoadWebsiteUseCase,
@@ -266,4 +271,81 @@ class MainViewModelTest {
             )
         }
     }
+
+    @Test
+    fun `setWebView does not load the initial url when history was restored`() = runTest {
+        // Given - el WebView vuelve con su historial restaurado tras la muerte del proceso
+
+        // When
+        viewModel.setWebView(mockWebView, loadInitialUrl = false)
+
+        // Then - cargar la URL inicial pisaría la página donde estaba el usuario
+        verify(exactly = 0) { mockLoadWebsiteUseCase(any()) }
+    }
+
+    @Test
+    fun `RetryLoad closes the dialog and reloads`() = runTest {
+        // Given - el usuario está frente al diálogo de sin conexión
+        every { mockIsDeviceOfflineUseCase() } returns true
+        viewModel.setWebView(mockWebView)
+        viewModel.onError(WebViewError.NetworkError("net::ERR_INTERNET_DISCONNECTED"), null)
+        assertTrue(viewModel.uiState.value.showErrorDialog)
+
+        // When
+        viewModel.onEvent(MainUiEvent.RetryLoad)
+        advanceUntilIdle()
+
+        // Then
+        assertFalse(viewModel.uiState.value.showErrorDialog)
+        verify(atLeast = 1) { mockLoadWebsiteUseCase(mockWebView) }
+    }
+
+    @Test
+    fun `the site reloads by itself when the network comes back`() = runTest {
+        // Given - un ViewModel que observa la conectividad y un diálogo de sin conexión abierto
+        val connectivity = MutableSharedFlow<Boolean>(replay = 1)
+        every { mockIsDeviceOfflineUseCase.observe() } returns connectivity
+        every { mockIsDeviceOfflineUseCase() } returns true
+        val vm = buildViewModel()
+        vm.setWebView(mockWebView)
+        vm.onError(WebViewError.NetworkError("net::ERR_INTERNET_DISCONNECTED"), null)
+        advanceUntilIdle()
+        assertTrue(vm.uiState.value.showErrorDialog)
+
+        // When - vuelve la red
+        connectivity.emit(false)
+        advanceUntilIdle()
+
+        // Then - el diálogo se cierra solo y el sitio se recarga
+        assertFalse(vm.uiState.value.showErrorDialog)
+        verify(atLeast = 2) { mockLoadWebsiteUseCase(mockWebView) }
+    }
+
+    @Test
+    fun `the site does not reload on reconnection when the user was browsing normally`() = runTest {
+        // Given - sin diálogo abierto: el usuario está leyendo con normalidad
+        val connectivity = MutableSharedFlow<Boolean>(replay = 1)
+        every { mockIsDeviceOfflineUseCase.observe() } returns connectivity
+        val vm = buildViewModel()
+        vm.setWebView(mockWebView)
+        advanceUntilIdle()
+
+        // When - la red cambia de estado
+        connectivity.emit(true)
+        connectivity.emit(false)
+        advanceUntilIdle()
+
+        // Then - solo la carga inicial: una recarga sorpresiva le haría perder la página
+        verify(exactly = 1) { mockLoadWebsiteUseCase(mockWebView) }
+        assertFalse(vm.uiState.value.showErrorDialog)
+    }
+
+    private fun buildViewModel() = MainViewModel(
+        loadWebsiteUseCase = mockLoadWebsiteUseCase,
+        handleWebViewErrorUseCase = mockHandleWebViewErrorUseCase,
+        navigateBackUseCase = mockNavigateBackUseCase,
+        hideElementsUseCase = mockHideElementsUseCase,
+        isDeviceOfflineUseCase = mockIsDeviceOfflineUseCase,
+        analyticsTracker = mockAnalyticsTracker
+    )
 }

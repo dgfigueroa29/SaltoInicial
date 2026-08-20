@@ -2,7 +2,6 @@ package com.boa.saltoinicial
 
 import android.annotation.SuppressLint
 import android.app.Activity
-import android.content.res.Configuration
 import android.os.Bundle
 import android.os.StrictMode
 import android.view.ViewGroup
@@ -21,13 +20,15 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
@@ -36,6 +37,9 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.amplitude.core.Amplitude
 import com.appsflyer.AppsFlyerLib
@@ -215,6 +219,101 @@ class MainActivity : ComponentActivity() {
  *
  * @param viewModel ViewModel que gestiona el estado del WebView.
  */
+/**
+ * Aloja el [WebView] y lo ata al ciclo de vida de la pantalla.
+ *
+ * La instancia se crea una sola vez con `remember` en lugar de dentro del `factory` del
+ * [AndroidView], porque los efectos necesitan una referencia para pausarla, guardar su estado y
+ * destruirla.
+ *
+ * Tres cosas que antes no pasaban:
+ *
+ * - **Pausa y reanudación**: sin esto, un video o audio embebido seguía sonando con la app en
+ *   segundo plano y los timers de JavaScript seguían gastando batería.
+ * - **Estado de navegación**: el historial se guarda en un [Bundle] que sobrevive a la muerte del
+ *   proceso, así que el usuario vuelve al artículo que estaba leyendo y no a la home del blog.
+ * - **Destrucción**: al salir se libera el WebView y se suelta la referencia que guardaba el
+ *   ViewModel, que sobrevive a la Activity.
+ *
+ * @param viewModel ViewModel que gestiona el estado del WebView.
+ * @param chromeClient Cliente que habilita el selector de archivos y los diálogos de JavaScript.
+ */
+@SuppressLint("SetJavaScriptEnabled")
+@Composable
+private fun FullWebViewPage(viewModel: MainViewModel, chromeClient: MainWebChromeClient) {
+    val context = LocalContext.current
+
+    // Se guarda con rememberSaveable para que el historial sobreviva a la muerte del proceso.
+    // WebView.saveState no guarda el contenido de las páginas, solo la pila de navegación.
+    val savedState = rememberSaveable { Bundle() }
+
+    val webView = remember {
+        val oldPolicy = StrictMode.allowThreadDiskReads()
+        try {
+            WebView(context).apply {
+                layoutParams = ViewGroup.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT
+                )
+
+                // Configure WebView settings
+                settings.javaScriptEnabled = true
+                settings.domStorageEnabled = true
+                settings.userAgentString = System.getProperty("http.agent")
+                settings.useWideViewPort = true
+                settings.loadWithOverviewMode = true
+
+                webViewClient = MainWebViewClient(viewModel)
+                webChromeClient = chromeClient
+
+                // Si hay historial restaurado no se carga la URL inicial: pisaría la página en la
+                // que estaba el usuario.
+                val restored = !savedState.isEmpty && restoreState(savedState) != null
+                viewModel.setWebView(this, loadInitialUrl = !restored)
+            }
+        } finally {
+            StrictMode.setThreadPolicy(oldPolicy)
+        }
+    }
+
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner, webView) {
+        val observer = LifecycleEventObserver { _, event ->
+            when (event) {
+                Lifecycle.Event.ON_PAUSE -> {
+                    // Antes de pausar, para que el bundle esté fresco cuando el sistema lo guarde.
+                    webView.saveState(savedState)
+                    webView.onPause()
+                    webView.pauseTimers()
+                }
+
+                Lifecycle.Event.ON_RESUME -> {
+                    webView.onResume()
+                    webView.resumeTimers()
+                }
+
+                else -> Unit
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+            webView.saveState(savedState)
+            viewModel.detachWebView()
+        }
+    }
+
+    AndroidView(
+        modifier = Modifier.fillMaxSize(),
+        factory = { webView },
+        onRelease = { view ->
+            view.stopLoading()
+            (view.parent as? ViewGroup)?.removeView(view)
+            view.destroy()
+        }
+    )
+}
+
 @SuppressLint("SetJavaScriptEnabled")
 @Composable
 fun WebViewPage(viewModel: MainViewModel) {
@@ -246,69 +345,19 @@ fun WebViewPage(viewModel: MainViewModel) {
         }
     }
 
-    // The Configuration object represents all the current configurations,
-    // not just the ones that have changed.
-    val configuration = LocalConfiguration.current
-    when (configuration.orientation) {
-        Configuration.ORIENTATION_LANDSCAPE -> {
-            println("landscape")
+    if (LocalInspectionMode.current) {
+        // Show a placeholder in the preview to avoid the WebView rendering issue
+        // WebView is not fully supported in LayoutLib (Compose Preview)
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Text(text = "WebView Placeholder", color = MaterialTheme.colorScheme.primary)
         }
-
-        else -> {
-            println("portrait")
-        }
+    } else {
+        FullWebViewPage(viewModel = viewModel, chromeClient = chromeClient)
     }
-
-    // Adding a WebView inside AndroidView
-    // with layout as full screen
-    @Composable
-    fun FullWebViewPage() {
-        if (LocalInspectionMode.current) {
-            // Show a placeholder in the preview to avoid the WebView rendering issue
-            // WebView is not fully supported in LayoutLib (Compose Preview)
-            Column(
-                modifier = Modifier.fillMaxSize(),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-                Text(text = "WebView Placeholder", color = MaterialTheme.colorScheme.primary)
-            }
-        } else {
-            AndroidView(
-                modifier = Modifier.fillMaxSize(),
-                factory = {
-                    val oldPolicy = StrictMode.allowThreadDiskReads()
-                    try {
-                        WebView(it).apply {
-                            layoutParams = ViewGroup.LayoutParams(
-                                ViewGroup.LayoutParams.MATCH_PARENT,
-                                ViewGroup.LayoutParams.MATCH_PARENT
-                            )
-
-                            // Configure WebView settings
-                            settings.javaScriptEnabled = true
-                            settings.domStorageEnabled = true
-                            settings.databaseEnabled = true
-                            settings.userAgentString = System.getProperty("http.agent")
-                            settings.useWideViewPort = true
-                            settings.loadWithOverviewMode = true
-
-                            // Set custom WebViewClient
-                            webViewClient = MainWebViewClient(viewModel)
-                            webChromeClient = chromeClient
-
-                            // Set WebView in ViewModel
-                            viewModel.setWebView(this)
-                        }
-                    } finally {
-                        StrictMode.setThreadPolicy(oldPolicy)
-                    }
-                }
-            )
-        }
-    }
-
-    FullWebViewPage()
 
     // Show loading dialog
     if (uiState.isLoading) {
@@ -324,6 +373,9 @@ fun WebViewPage(viewModel: MainViewModel) {
             desc = uiState.errorDescriptionRes?.let { stringResource(it) },
             onDismiss = {
                 viewModel.onEvent(MainUiEvent.DismissErrorDialog)
+            },
+            onRetry = {
+                viewModel.onEvent(MainUiEvent.RetryLoad)
             }
         )
     }

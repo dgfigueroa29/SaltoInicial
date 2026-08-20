@@ -21,6 +21,7 @@ import com.google.firebase.perf.metrics.Trace
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
@@ -42,14 +43,53 @@ class MainViewModel(
     private var currentWebView: WebView? = null
     private var pageLoadTrace: Trace? = null
 
+    init {
+        observeConnectivity()
+    }
+
     /**
-     * Asocia el [WebView] al ViewModel y dispara la carga inicial del sitio web.
-     * Debe llamarse desde el Composable una vez que el [WebView] es creado.
+     * Asocia el [WebView] al ViewModel. Debe llamarse desde el Composable una vez que el [WebView]
+     * es creado.
      *
      * @param webView Instancia del WebView a gestionar.
+     * @param loadInitialUrl `false` cuando el WebView ya tiene su historial restaurado con
+     * `restoreState`: en ese caso cargar la URL inicial pisaría la página donde estaba el usuario.
      */
-    fun setWebView(webView: WebView) {
+    fun setWebView(webView: WebView, loadInitialUrl: Boolean = true) {
         currentWebView = webView
+        if (loadInitialUrl) {
+            loadWebsite()
+        }
+    }
+
+    /**
+     * Suelta la referencia al [WebView]. La llama el Composable antes de destruirlo, para que el
+     * ViewModel —que sobrevive a la Activity— no quede reteniendo una vista muerta.
+     */
+    fun detachWebView() {
+        currentWebView = null
+    }
+
+    /**
+     * Recarga el sitio cuando la red vuelve, pero solo si el usuario está frente al diálogo de sin
+     * conexión: si estaba leyendo con normalidad, una recarga sorpresiva le haría perder la página.
+     */
+    private fun observeConnectivity() {
+        viewModelScope.launch {
+            isDeviceOfflineUseCase.observe()
+                .distinctUntilChanged()
+                .collect { isOffline ->
+                    if (!isOffline && _uiState.value.showErrorDialog) {
+                        Timber.i("Volvió la conexión: se recarga el sitio.")
+                        retryLoad()
+                    }
+                }
+        }
+    }
+
+    /** Cierra el diálogo de error y vuelve a cargar el sitio. */
+    private fun retryLoad() {
+        _uiState.value = _uiState.value.copy(showErrorDialog = false)
         loadWebsite()
     }
 
@@ -63,6 +103,7 @@ class MainViewModel(
             MainUiEvent.LoadWebsite -> loadWebsite()
             MainUiEvent.DismissErrorDialog -> dismissErrorDialog()
             MainUiEvent.NavigateBack -> navigateBack()
+            MainUiEvent.RetryLoad -> onRetry()
             is MainUiEvent.ShowError ->
                 showError(event.titleRes, event.descriptionRes, ERROR_TYPE_CUSTOM)
         }
@@ -75,6 +116,17 @@ class MainViewModel(
                 loadWebsiteUseCase(webView)
             }
         }
+    }
+
+    private fun onRetry() {
+        analyticsTracker.trackEvent(
+            AnalyticsEvents.ERROR_DIALOG_DISMISSED,
+            mapOf(
+                AnalyticsParams.SCREEN to "webview",
+                AnalyticsParams.ACTION to "retry"
+            )
+        )
+        retryLoad()
     }
 
     private fun dismissErrorDialog() {
