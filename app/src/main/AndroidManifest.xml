@@ -21,6 +21,12 @@
     -->
     <uses-permission android:name="com.google.android.gms.permission.AD_ID" />
 
+    <!--
+      usesCleartextTraffic en false: el sitio que la app envuelve es HTTPS, así que permitir texto
+      plano no habilitaba nada y sí dejaba la puerta abierta a que una redirección o un recurso
+      embebido viajen sin cifrar. Se declara explícitamente porque en API 24-27 el default del
+      sistema es true; recién desde API 28 es false.
+    -->
     <application
         android:name=".SaltoInicialApp"
         android:allowBackup="true"
@@ -32,7 +38,7 @@
         android:roundIcon="@mipmap/logo"
         android:supportsRtl="true"
         android:theme="@style/Theme.Webview"
-        android:usesCleartextTraffic="true"
+        android:usesCleartextTraffic="false"
         tools:replace="android:allowBackup,android:fullBackupContent,android:dataExtractionRules"
         tools:targetApi="31">
 
