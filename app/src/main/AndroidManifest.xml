@@ -5,6 +5,22 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
+    <!--
+      ID de publicidad (GAID). Play exige declarar este permiso en apps que targetean
+      Android 13 (API 33) o superior y acceden al ID de publicidad; sin él, el GAID se
+      devuelve en ceros.
+
+      firebase-analytics y af-android-sdk (AppsFlyer) ya lo inyectan por manifest merge,
+      así que la app siempre lo tuvo en el APK publicado. Se declara aquí de forma explícita
+      para que la recolección quede visible en el manifest del módulo y trazable contra la
+      declaración de Seguridad de datos de Play Console.
+
+      Si algún día se decide no recolectar el ID de publicidad, no alcanza con borrar esta
+      línea: hay que removerlo del merge con tools:node="remove" y desactivar la
+      recolección en cada SDK. Ver docs/play-data-safety.md.
+    -->
+    <uses-permission android:name="com.google.android.gms.permission.AD_ID" />
+
     <application
         android:name=".SaltoInicialApp"
         android:allowBackup="true"
@@ -35,10 +51,17 @@
             android:name="com.facebook.sdk.ClientToken"
             android:value="${facebookClientToken}" />
 
-        <!-- Audience Network -->
-        <meta-data
-            android:name="com.facebook.sdk.AdvertisingIdCollectionEnabled"
-            android:value="true" />
+        <!--
+          Audience Network / Meta App Events.
+
+          "com.facebook.sdk.AdvertisingIdCollectionEnabled" no existe en el SDK de Meta
+          (las claves válidas son las de FacebookSdk: AutoInitEnabled, AutoLogAppEventsEnabled,
+          AdvertiserIDCollectionEnabled, CodelessDebugLogEnabled, MonitorEnabled). Era un no-op
+          que además contradecía a AdvertiserIDCollectionEnabled, así que se eliminó.
+
+          La clave efectiva es AdvertiserIDCollectionEnabled: en false, el SDK de Meta no
+          recolecta el ID de publicidad. El GAID lo siguen usando Firebase Analytics y AppsFlyer.
+        -->
         <meta-data
             android:name="com.facebook.sdk.AutoLogAppEventsEnabled"
             android:value="false" />
