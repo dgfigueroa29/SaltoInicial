@@ -1,21 +1,70 @@
 package com.boa.saltoinicial.presentation.ui
 
+import android.content.ActivityNotFoundException
+import android.content.Context
+import android.content.Intent
 import android.graphics.Bitmap
 import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import androidx.core.net.toUri
 import com.boa.saltoinicial.domain.models.WebViewError
+import com.boa.saltoinicial.domain.usecase.IsInternalUrlUseCase
 import com.boa.saltoinicial.presentation.viewmodel.MainViewModel
 import timber.log.Timber
 
 /**
  * Custom WebViewClient that integrates with the ViewModel
+ *
+ * @param viewModel ViewModel al que se delegan los eventos de carga.
+ * @param isInternalUrl Política que decide qué URLs se abren dentro del WebView.
  */
 class MainWebViewClient(
-    private val viewModel: MainViewModel
+    private val viewModel: MainViewModel,
+    private val isInternalUrl: IsInternalUrlUseCase = IsInternalUrlUseCase()
 ) : WebViewClient() {
+
+    /**
+     * Mantiene dentro del WebView solo lo que pertenece al sitio envuelto.
+     *
+     * Con un [WebViewClient] asignado, el WebView intenta cargar él mismo **cualquier** esquema,
+     * así que un `mailto:`, un `tel:` o un botón de compartir terminaban en
+     * `ERR_UNKNOWN_URL_SCHEME` sin abrir nada. Ahora esos enlaces, y los de otros dominios, se
+     * derivan a la app del sistema que corresponda: además de funcionar, evita que un sitio de
+     * terceros se muestre dentro de la app sin barra de direcciones.
+     */
+    override fun shouldOverrideUrlLoading(
+        view: WebView?,
+        request: WebResourceRequest?
+    ): Boolean {
+        val url = request?.url?.toString().orEmpty()
+        val context = view?.context
+        return when {
+            url.isEmpty() || isInternalUrl(url) -> false
+            context == null -> false
+            else -> openExternally(context, url)
+        }
+    }
+
+    /**
+     * Abre [url] con la app del sistema que la maneje.
+     *
+     * Devuelve siempre `true`: si no hay ninguna app capaz de abrirla, el WebView tampoco puede,
+     * y dejarlo intentar solo produciría una página de error.
+     */
+    private fun openExternally(context: Context, url: String): Boolean {
+        val intent = Intent(Intent.ACTION_VIEW, url.toUri())
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        try {
+            context.startActivity(intent)
+            Timber.i("Enlace externo derivado al sistema: %s", url)
+        } catch (e: ActivityNotFoundException) {
+            Timber.w(e, "Ninguna app instalada puede abrir %s", url)
+        }
+        return true
+    }
 
     /**
      * Notifica al [MainViewModel] cuando falla la carga del documento principal.
