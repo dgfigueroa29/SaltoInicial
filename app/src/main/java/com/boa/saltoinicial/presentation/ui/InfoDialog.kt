@@ -2,8 +2,10 @@ package com.boa.saltoinicial.presentation.ui
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -20,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -35,18 +38,20 @@ import com.boa.saltoinicial.R
  * @param title Título del diálogo. Por defecto vacío.
  * @param desc Descripción o mensaje detallado del error. Por defecto vacío.
  * @param onDismiss Callback invocado cuando el usuario cierra el diálogo.
+ * @param onRetry Callback del botón de reintentar. Si es `null` el botón no se muestra.
  */
 @Composable
 fun InfoDialog(
     title: String? = "",
     desc: String? = "",
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    onRetry: (() -> Unit)? = null
 ) {
     Dialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false),
     ) {
-        InfoDialogContent(title = title, desc = desc, onDismiss = onDismiss)
+        InfoDialogContent(title = title, desc = desc, onDismiss = onDismiss, onRetry = onRetry)
     }
 }
 
@@ -54,7 +59,8 @@ fun InfoDialog(
 private fun InfoDialogContent(
     title: String?,
     desc: String?,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    onRetry: (() -> Unit)?
 ) {
     Box(
         modifier = Modifier
@@ -62,7 +68,7 @@ private fun InfoDialogContent(
             .fillMaxHeight()
             .background(color = Color.Transparent)
     ) {
-        InfoDialogCard(title = title, desc = desc, onDismiss = onDismiss)
+        InfoDialogCard(title = title, desc = desc, onDismiss = onDismiss, onRetry = onRetry)
     }
 }
 
@@ -70,7 +76,8 @@ private fun InfoDialogContent(
 private fun InfoDialogCard(
     title: String?,
     desc: String?,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    onRetry: (() -> Unit)?
 ) {
     Box(
         modifier = Modifier
@@ -81,7 +88,12 @@ private fun InfoDialogCard(
         contentAlignment = Alignment.BottomCenter
     ) {
         InfoDialogLogo()
-        InfoDialogTextContent(title = title, desc = desc, onDismiss = onDismiss)
+        InfoDialogTextContent(
+            title = title,
+            desc = desc,
+            onDismiss = onDismiss,
+            onRetry = onRetry
+        )
     }
 }
 
@@ -101,7 +113,8 @@ private fun InfoDialogLogo() {
 private fun InfoDialogTextContent(
     title: String?,
     desc: String?,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    onRetry: (() -> Unit)?
 ) {
     Column(
         modifier = Modifier.padding(16.dp),
@@ -112,7 +125,7 @@ private fun InfoDialogTextContent(
         Spacer(modifier = Modifier.height(8.dp))
         InfoDialogDescription(desc = desc)
         Spacer(modifier = Modifier.height(24.dp))
-        InfoDialogButton(onDismiss = onDismiss)
+        InfoDialogActions(onDismiss = onDismiss, onRetry = onRetry)
         Spacer(modifier = Modifier.height(24.dp))
     }
 }
@@ -144,14 +157,23 @@ private fun InfoDialogDescription(desc: String?) {
 }
 
 @Composable
-private fun InfoDialogButton(onDismiss: () -> Unit) {
+private fun InfoDialogActions(onDismiss: () -> Unit, onRetry: (() -> Unit)?) {
+    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        if (onRetry != null) {
+            InfoDialogButton(text = stringResource(R.string.retry), onClick = onRetry)
+        }
+        InfoDialogButton(text = stringResource(R.string.ok), onClick = onDismiss)
+    }
+}
+
+@Composable
+private fun InfoDialogButton(text: String, onClick: () -> Unit) {
     Button(
-        onClick = onDismiss,
-        modifier = Modifier,
+        onClick = onClick,
         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
     ) {
         Text(
-            text = "OK",
+            text = text,
             style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.onPrimary,
         )

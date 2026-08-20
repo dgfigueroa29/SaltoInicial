@@ -50,6 +50,7 @@ object AnalyticsParams {
     const val SOURCE = "source"
     const val ERROR_TYPE = "error_type"
     const val ERROR_MESSAGE = "error_message"
+    const val IS_OFFLINE = "is_offline"
     const val ACTION = "action"
     const val CAN_GO_BACK = "can_go_back"
     const val PLATFORM = "platform"

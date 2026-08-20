@@ -8,14 +8,19 @@ import timber.log.Timber
 /**
  * Application class para SaltoInicial.
  *
- * Inicializa StrictMode en debug para detectar accesos al disco/red en el hilo principal,
- * y configura Sentry para el monitoreo de errores en producción si el DSN está disponible
- * en [BuildConfig.SENTRY_DSN].
+ * Planta el árbol de Timber que corresponda al build ([Timber.DebugTree] en debug,
+ * [CrashReportingTree] en release), inicializa StrictMode en debug para detectar accesos al
+ * disco/red en el hilo principal, y configura Sentry para el monitoreo de errores en producción
+ * si el DSN está disponible en [BuildConfig.SENTRY_DSN].
  */
 class SaltoInicialApp : Application() {
 
     override fun onCreate() {
         super.onCreate()
+
+        // Timber descarta todo hasta que se le planta un árbol, así que esto va primero: sin
+        // esta llamada ningún log de la app llega a Logcat ni a Crashlytics.
+        Timber.plant(if (BuildConfig.DEBUG) Timber.DebugTree() else CrashReportingTree())
 
         if (BuildConfig.DEBUG) {
             StrictMode.setThreadPolicy(
@@ -40,8 +45,8 @@ class SaltoInicialApp : Application() {
         val dsn = BuildConfig.SENTRY_DSN
 
         if (dsn.isNotBlank()) {
-            // Sentry initialization may perform disk reads on the main thread
-            val oldPolicy = StrictMode.allowThreadDiskReads()
+            // Sentry initialization may perform disk I/O on the main thread
+            val oldPolicy = StrictMode.allowThreadDiskWrites()
             try {
                 SentryAndroid.init(this) { options ->
                     options.dsn = dsn

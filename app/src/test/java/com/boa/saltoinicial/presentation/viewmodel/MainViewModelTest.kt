@@ -2,12 +2,15 @@ package com.boa.saltoinicial.presentation.viewmodel
 
 import android.webkit.WebView
 import app.cash.turbine.test
+import com.boa.saltoinicial.R
 import com.boa.saltoinicial.domain.models.WebViewError
-import com.boa.saltoinicial.domain.repository.WebViewRepository
 import com.boa.saltoinicial.domain.usecase.HandleWebViewErrorUseCase
 import com.boa.saltoinicial.domain.usecase.HideElementsUseCase
+import com.boa.saltoinicial.domain.usecase.IsDeviceOfflineUseCase
 import com.boa.saltoinicial.domain.usecase.LoadWebsiteUseCase
 import com.boa.saltoinicial.domain.usecase.NavigateBackUseCase
+import com.boa.saltoinicial.presentation.analytics.AnalyticsEvents
+import com.boa.saltoinicial.presentation.analytics.AnalyticsParams
 import com.boa.saltoinicial.presentation.analytics.AnalyticsTracker
 import com.boa.saltoinicial.presentation.state.MainUiEvent
 import com.boa.saltoinicial.presentation.state.MainUiState
@@ -19,23 +22,28 @@ import io.mockk.mockkStatic
 import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class MainViewModelTest {
 
-    private lateinit var mockRepository: WebViewRepository
     private lateinit var mockLoadWebsiteUseCase: LoadWebsiteUseCase
     private lateinit var mockHandleWebViewErrorUseCase: HandleWebViewErrorUseCase
     private lateinit var mockNavigateBackUseCase: NavigateBackUseCase
     private lateinit var mockHideElementsUseCase: HideElementsUseCase
+    private lateinit var mockIsDeviceOfflineUseCase: IsDeviceOfflineUseCase
     private lateinit var mockAnalyticsTracker: AnalyticsTracker
     private lateinit var mockWebView: WebView
     private lateinit var viewModel: MainViewModel
@@ -53,11 +61,11 @@ class MainViewModelTest {
         every { FirebasePerformance.getInstance() } returns mockFirebasePerformance
         every { mockFirebasePerformance.newTrace(any()) } returns mockTrace
 
-        mockRepository = mockk()
         mockLoadWebsiteUseCase = mockk()
         mockHandleWebViewErrorUseCase = mockk()
         mockNavigateBackUseCase = mockk()
         mockHideElementsUseCase = mockk()
+        mockIsDeviceOfflineUseCase = mockk()
         mockAnalyticsTracker = mockk(relaxed = true)
         mockWebView = mockk(relaxed = true)
 
@@ -68,13 +76,17 @@ class MainViewModelTest {
         every { mockHandleWebViewErrorUseCase(any()) } returns Unit
         every { mockNavigateBackUseCase(any()) } returns Unit
         every { mockHideElementsUseCase(any()) } returns Unit
+        // Por defecto el dispositivo tiene conexión: el diálogo de offline no debe aparecer.
+        every { mockIsDeviceOfflineUseCase() } returns false
+        // Sin cambios de conectividad salvo que el test diga lo contrario.
+        every { mockIsDeviceOfflineUseCase.observe() } returns flowOf()
 
         viewModel = MainViewModel(
-            webViewRepository = mockRepository,
             loadWebsiteUseCase = mockLoadWebsiteUseCase,
             handleWebViewErrorUseCase = mockHandleWebViewErrorUseCase,
             navigateBackUseCase = mockNavigateBackUseCase,
             hideElementsUseCase = mockHideElementsUseCase,
+            isDeviceOfflineUseCase = mockIsDeviceOfflineUseCase,
             analyticsTracker = mockAnalyticsTracker
         )
     }
@@ -151,7 +163,7 @@ class MainViewModelTest {
     @Test
     fun `onEvent ShowError does not throw exception`() = runTest {
         // When & Then - Should not throw any exception
-        viewModel.onEvent(MainUiEvent.ShowError("Test Title", "Test Description"))
+        viewModel.onEvent(MainUiEvent.ShowError(R.string.offline, R.string.offline_desc))
     }
 
     @Test
@@ -159,4 +171,181 @@ class MainViewModelTest {
         // When & Then - Should not throw any exception
         viewModel.onPageStarted("https://example.com")
     }
+
+    @Test
+    fun `onError shows the offline dialog when the device has no connection`() = runTest {
+        // Given - el dispositivo está sin red (modo avión o sin datos)
+        every { mockIsDeviceOfflineUseCase() } returns true
+
+        // When
+        viewModel.onError(WebViewError.NetworkError("net::ERR_INTERNET_DISCONNECTED"), null)
+
+        // Then - textos como recursos, para que se traduzcan según el idioma del dispositivo
+        val state = viewModel.uiState.value
+        assertTrue(state.showErrorDialog)
+        assertEquals(R.string.offline, state.errorTitleRes)
+        assertEquals(R.string.offline_desc, state.errorDescriptionRes)
+        assertFalse(state.isLoading)
+    }
+
+    @Test
+    fun `onError does not show the offline dialog when the device has connection`() = runTest {
+        // Given - el sitio falla (500, recurso roto, JS con errores) pero hay conexión
+        every { mockIsDeviceOfflineUseCase() } returns false
+
+        // When
+        viewModel.onError(WebViewError.NetworkError("net::ERR_FAILED"), "https://example.com")
+
+        // Then
+        assertFalse(viewModel.uiState.value.showErrorDialog)
+    }
+
+    @Test
+    fun `onError stops the loading dialog when the error is suppressed`() = runTest {
+        // Given - una carga en curso que termina fallando con conexión disponible
+        every { mockIsDeviceOfflineUseCase() } returns false
+        viewModel.onPageStarted("https://example.com")
+        assertTrue(viewModel.uiState.value.isLoading)
+
+        // When
+        viewModel.onError(WebViewError.NetworkError("net::ERR_FAILED"), "https://example.com")
+
+        // Then - sin diálogo de error, pero tampoco el de carga girando para siempre
+        val state = viewModel.uiState.value
+        assertFalse(state.showErrorDialog)
+        assertFalse(state.isLoading)
+    }
+
+    @Test
+    fun `onError keeps reporting the error to analytics when there is connection`() = runTest {
+        // Given
+        every { mockIsDeviceOfflineUseCase() } returns false
+
+        // When
+        viewModel.onError(WebViewError.NetworkError("net::ERR_FAILED"), "https://example.com")
+
+        // Then - el error del sitio se sigue registrando aunque no se muestre nada al usuario
+        verify {
+            mockAnalyticsTracker.trackEvent(
+                AnalyticsEvents.WEBVIEW_ERROR,
+                match { params ->
+                    params[AnalyticsParams.URL] == "https://example.com" &&
+                            params[AnalyticsParams.ERROR_MESSAGE] == "net::ERR_FAILED" &&
+                            params[AnalyticsParams.IS_OFFLINE] == false
+                }
+            )
+        }
+        verify(exactly = 0) {
+            mockAnalyticsTracker.trackEvent(AnalyticsEvents.ERROR_DIALOG_SHOWN, any())
+        }
+    }
+
+    @Test
+    fun `onEvent ShowError still opens the dialog regardless of connectivity`() = runTest {
+        // Given - el diálogo pedido explícitamente por la UI no depende de la conectividad
+        every { mockIsDeviceOfflineUseCase() } returns false
+
+        // When
+        viewModel.onEvent(MainUiEvent.ShowError(R.string.app_name, R.string.please_wait))
+
+        // Then
+        val state = viewModel.uiState.value
+        assertTrue(state.showErrorDialog)
+        assertEquals(R.string.app_name, state.errorTitleRes)
+        assertEquals(R.string.please_wait, state.errorDescriptionRes)
+    }
+
+    @Test
+    fun `showing the offline dialog does not send translated copy to analytics`() = runTest {
+        // Given
+        every { mockIsDeviceOfflineUseCase() } returns true
+
+        // When
+        viewModel.onError(WebViewError.NetworkError("net::ERR_INTERNET_DISCONNECTED"), null)
+
+        // Then - un identificador estable, no el título traducido
+        verify {
+            mockAnalyticsTracker.trackEvent(
+                AnalyticsEvents.ERROR_DIALOG_SHOWN,
+                match { params -> params[AnalyticsParams.ERROR_TYPE] == "offline" }
+            )
+        }
+    }
+
+    @Test
+    fun `setWebView does not load the initial url when history was restored`() = runTest {
+        // Given - el WebView vuelve con su historial restaurado tras la muerte del proceso
+
+        // When
+        viewModel.setWebView(mockWebView, loadInitialUrl = false)
+
+        // Then - cargar la URL inicial pisaría la página donde estaba el usuario
+        verify(exactly = 0) { mockLoadWebsiteUseCase(any()) }
+    }
+
+    @Test
+    fun `RetryLoad closes the dialog and reloads`() = runTest {
+        // Given - el usuario está frente al diálogo de sin conexión
+        every { mockIsDeviceOfflineUseCase() } returns true
+        viewModel.setWebView(mockWebView)
+        viewModel.onError(WebViewError.NetworkError("net::ERR_INTERNET_DISCONNECTED"), null)
+        assertTrue(viewModel.uiState.value.showErrorDialog)
+
+        // When
+        viewModel.onEvent(MainUiEvent.RetryLoad)
+        advanceUntilIdle()
+
+        // Then
+        assertFalse(viewModel.uiState.value.showErrorDialog)
+        verify(atLeast = 1) { mockLoadWebsiteUseCase(mockWebView) }
+    }
+
+    @Test
+    fun `the site reloads by itself when the network comes back`() = runTest {
+        // Given - un ViewModel que observa la conectividad y un diálogo de sin conexión abierto
+        val connectivity = MutableSharedFlow<Boolean>(replay = 1)
+        every { mockIsDeviceOfflineUseCase.observe() } returns connectivity
+        every { mockIsDeviceOfflineUseCase() } returns true
+        val vm = buildViewModel()
+        vm.setWebView(mockWebView)
+        vm.onError(WebViewError.NetworkError("net::ERR_INTERNET_DISCONNECTED"), null)
+        advanceUntilIdle()
+        assertTrue(vm.uiState.value.showErrorDialog)
+
+        // When - vuelve la red
+        connectivity.emit(false)
+        advanceUntilIdle()
+
+        // Then - el diálogo se cierra solo y el sitio se recarga
+        assertFalse(vm.uiState.value.showErrorDialog)
+        verify(atLeast = 2) { mockLoadWebsiteUseCase(mockWebView) }
+    }
+
+    @Test
+    fun `the site does not reload on reconnection when the user was browsing normally`() = runTest {
+        // Given - sin diálogo abierto: el usuario está leyendo con normalidad
+        val connectivity = MutableSharedFlow<Boolean>(replay = 1)
+        every { mockIsDeviceOfflineUseCase.observe() } returns connectivity
+        val vm = buildViewModel()
+        vm.setWebView(mockWebView)
+        advanceUntilIdle()
+
+        // When - la red cambia de estado
+        connectivity.emit(true)
+        connectivity.emit(false)
+        advanceUntilIdle()
+
+        // Then - solo la carga inicial: una recarga sorpresiva le haría perder la página
+        verify(exactly = 1) { mockLoadWebsiteUseCase(mockWebView) }
+        assertFalse(vm.uiState.value.showErrorDialog)
+    }
+
+    private fun buildViewModel() = MainViewModel(
+        loadWebsiteUseCase = mockLoadWebsiteUseCase,
+        handleWebViewErrorUseCase = mockHandleWebViewErrorUseCase,
+        navigateBackUseCase = mockNavigateBackUseCase,
+        hideElementsUseCase = mockHideElementsUseCase,
+        isDeviceOfflineUseCase = mockIsDeviceOfflineUseCase,
+        analyticsTracker = mockAnalyticsTracker
+    )
 }
