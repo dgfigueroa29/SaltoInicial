@@ -5,8 +5,8 @@ WebView nativo con Jetpack Compose.
 
 ## Stack
 
-- Kotlin 2.4.0 · AGP 9.2.1 · JVM 17
-- Jetpack Compose (BOM 2026.05.01) + Material 3
+- Kotlin 2.4.0 · AGP 9.3.1 · JVM 17
+- Jetpack Compose (BOM 2026.08.00) + Material 3
 - minSdk 24 · compileSdk / targetSdk 37
 - Clean Architecture (domain / data / presentation) con patrón MVI e inyección manual de
   dependencias vía `ViewModelProvider.Factory`
