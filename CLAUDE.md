@@ -212,7 +212,8 @@ Al agregar un texto visible, cargarlo en `res/values/strings.xml` (español) **y
 
 ## Dependencias principales
 
-- **AGP 9.3.1** / **Kotlin 2.4.0** / **compileSdk 37** / **minSdk 24** / **targetSdk 37** / **JVM 17**
+- **AGP 9.3.1** / **Kotlin 2.4.0** / **compileSdk 37** / **minSdk 24** / **targetSdk 37** / **JVM 17
+  **
 - **Firebase BOM 34.18.0**: Analytics, Crashlytics, Performance Monitoring
 - **Compose BOM 2026.08.00**: UI, Material3
 - **Analítica y atribución**: AppsFlyer 7.0.1 (+ Install Referrer 2.2), Amplitude 1.30.1,

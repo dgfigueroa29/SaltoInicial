@@ -12,7 +12,7 @@ import timber.log.Timber
  * Crashlytics: los `WARN` como breadcrumbs que acompañan al próximo reporte, y las excepciones de
  * nivel `ERROR` como eventos no fatales.
  *
- * Sin este árbol (o sin `DebugTree` en debug) Timber descarta todo lo que recibe, que es lo que
+ * Sin este árbol (o sin `DebugTree` en debug) Timber descarta lo que recibe, que es lo que
  * pasaba hasta ahora: los logs de la app no llegaban a ningún lado.
  */
 class CrashReportingTree : Timber.Tree() {

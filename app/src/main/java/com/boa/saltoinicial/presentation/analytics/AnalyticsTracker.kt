@@ -1,5 +1,3 @@
-@file:Suppress("GrazieInspection")
-
 package com.boa.saltoinicial.presentation.analytics
 
 import android.content.Context

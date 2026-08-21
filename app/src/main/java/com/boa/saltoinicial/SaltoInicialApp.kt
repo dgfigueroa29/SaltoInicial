@@ -18,7 +18,7 @@ class SaltoInicialApp : Application() {
     override fun onCreate() {
         super.onCreate()
 
-        // Timber descarta todo hasta que se le planta un árbol, así que esto va primero: sin
+        // Timber descarta hasta que se le planta un árbol, así que esto va primero: sin
         // esta llamada ningún log de la app llega a Logcat ni a Crashlytics.
         Timber.plant(if (BuildConfig.DEBUG) Timber.DebugTree() else CrashReportingTree())
 

@@ -19,7 +19,8 @@
       línea: hay que removerlo del merge con tools:node="remove" y desactivar la
       recolección en cada SDK. Ver docs/play-data-safety.md.
     -->
-    <uses-permission android:name="com.google.android.gms.permission.AD_ID"
+    <uses-permission
+        android:name="com.google.android.gms.permission.AD_ID"
         tools:ignore="AdvertisingIdPolicy" />
 
     <!--

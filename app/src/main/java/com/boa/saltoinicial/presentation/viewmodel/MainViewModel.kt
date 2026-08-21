@@ -1,5 +1,6 @@
 package com.boa.saltoinicial.presentation.viewmodel
 
+import android.annotation.SuppressLint
 import android.webkit.WebView
 import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
@@ -40,6 +41,7 @@ class MainViewModel(
     private val _uiState = MutableStateFlow(MainUiState())
     val uiState: StateFlow<MainUiState> = _uiState.asStateFlow()
 
+    @SuppressLint("StaticFieldLeak")
     private var currentWebView: WebView? = null
     private var pageLoadTrace: Trace? = null
 
@@ -157,7 +159,7 @@ class MainViewModel(
     }
 
     /**
-     * Abre [InfoDialog] con textos localizados.
+     * Abre InfoDialog con textos localizados.
      *
      * @param titleRes Recurso del título.
      * @param descriptionRes Recurso de la descripción.
@@ -185,7 +187,7 @@ class MainViewModel(
     }
 
     /**
-     * Llamado por [MainWebViewClient] cuando el WebView comienza a cargar una página.
+     * Llamado por MainWebViewClient cuando el WebView comienza a cargar una página.
      * Muestra el loading, inicia un trace de Firebase Performance y registra el evento en analítica.
      *
      * @param url URL de la página que comenzó a cargar.
@@ -245,7 +247,7 @@ class MainViewModel(
     }
 
     /**
-     * Llamado por [MainWebViewClient] cuando falla la carga del documento principal.
+     * Llamado por MainWebViewClient cuando falla la carga del documento principal.
      *
      * Delega el manejo al [HandleWebViewErrorUseCase] y registra el evento en analítica siempre,
      * pero **solo muestra el diálogo si el dispositivo está sin conexión** (sin red o en modo
